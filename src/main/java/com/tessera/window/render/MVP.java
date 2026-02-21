@@ -40,13 +40,15 @@ public class MVP extends Matrix4f {
         get(buffer);
     }
 
+    // Reuse array to avoid per-call allocation in rendering hot path
+    private static final float[] MATRIX_VALS = new float[16];
+
     public void sendToShader(int shaderID, int uniformID) {
         if (Gdx.gl20 != null) {
-            float[] vals = new float[16];
             buffer.rewind();
-            buffer.get(vals);
+            buffer.get(MATRIX_VALS);
             buffer.rewind();
-            Gdx.gl20.glUniformMatrix4fv(uniformID, 1, false, vals, 0);
+            Gdx.gl20.glUniformMatrix4fv(uniformID, 1, false, MATRIX_VALS, 0);
         }
     }
 
