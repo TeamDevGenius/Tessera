@@ -1,39 +1,25 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.tessera.window.render;
 
+import com.badlogic.gdx.Gdx;
+import org.joml.Matrix4f;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
-import org.joml.Matrix4f;
-import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.ARBShaderObjects;
-
 /**
- * @author zipCoder933
+ * MVP (Model-View-Projection) matrix helper.
+ * Extends Matrix4f for JOML API compatibility.
+ * Uses LibGDX GL20 for shader upload.
  */
-public class MVP extends Matrix4f{//TODO: Decide if this class should really EXTEND Matrix4f
+public class MVP extends Matrix4f {
 
-    FloatBuffer buffer;
+    private FloatBuffer buffer;
 
     public MVP() {
         super();
-        buffer = BufferUtils.createFloatBuffer(16);
+        buffer = ByteBuffer.allocateDirect(16 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
     }
-
-//    public MVP(Matrix4f matrix) {
-//        buffer = BufferUtils.createFloatBuffer(16);
-//        this.matrix = matrix;
-//    }
-
-    //    public void update(final Matrix4f... matrices) {
-//        mvp.identity();
-//        for (int i = 0; i < matrices.length; i++) {
-//            mvp.mul(matrices[i]);
-//        }
-//        mvp.get(buffer);
-//    }
 
     public void update(final Matrix4f projection, final Matrix4f view, final Matrix4f model) {
         identity().mul(projection).mul(view).mul(model);
@@ -45,7 +31,6 @@ public class MVP extends Matrix4f{//TODO: Decide if this class should really EXT
         get(buffer);
     }
 
-
     public void update(Matrix4f model) {
         set(model);
         get(buffer);
@@ -56,12 +41,21 @@ public class MVP extends Matrix4f{//TODO: Decide if this class should really EXT
     }
 
     public void sendToShader(int shaderID, int uniformID) {
-        ARBShaderObjects.glUseProgramObjectARB(shaderID);
-        ARBShaderObjects.glUniformMatrix4fvARB(uniformID, false, buffer);
+        if (Gdx.gl20 != null) {
+            float[] vals = new float[16];
+            buffer.rewind();
+            buffer.get(vals);
+            buffer.rewind();
+            Gdx.gl20.glUniformMatrix4fv(uniformID, 1, false, vals, 0);
+        }
     }
 
     public void updateAndSendToShader(int shaderID, int uniformID) {
         update();
         sendToShader(shaderID, uniformID);
+    }
+
+    public FloatBuffer getBuffer() {
+        return buffer;
     }
 }

@@ -1,0 +1,110 @@
+// Android module - only fully configured when Android SDK is available
+def hasAndroid = false
+try {
+    Class.forName('com.android.build.gradle.AppPlugin')
+    hasAndroid = true
+} catch (ClassNotFoundException ignored) {}
+
+if (rootProject.hasProperty('includeAndroid') || hasAndroid) {
+    apply plugin: 'com.android.application'
+
+    android {
+        buildToolsVersion "33.0.1"
+        compileSdkVersion 33
+        namespace 'com.tessera.android'
+
+        defaultConfig {
+            applicationId "com.tessera.android"
+            minSdkVersion 21
+            targetSdkVersion 33
+            versionCode 1
+            versionName "1.8.0"
+        }
+
+        compileOptions {
+            sourceCompatibility JavaVersion.VERSION_1_8
+            targetCompatibility JavaVersion.VERSION_1_8
+        }
+
+        sourceSets {
+            main {
+                manifest.srcFile 'AndroidManifest.xml'
+                java.srcDirs = ['src/main/java']
+                aidl.srcDirs = ['src/main/java']
+                renderscript.srcDirs = ['src/main/java']
+                res.srcDirs = ['res']
+                assets.srcDirs = ['assets']
+                jniLibs.srcDirs = ['libs']
+            }
+        }
+
+        buildTypes {
+            release {
+                minifyEnabled false
+                proguardFiles getDefaultProguardFile('proguard-android.txt')
+            }
+        }
+    }
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        google()
+    }
+
+    configurations { natives }
+
+    dependencies {
+        implementation project(':core')
+        api "com.badlogicgames.gdx:gdx-backend-android:$gdxVersion"
+        natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi-v7a"
+        natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-arm64-v8a"
+        natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86"
+        natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86_64"
+        api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
+        natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-armeabi-v7a"
+        natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-arm64-v8a"
+        natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-x86"
+        natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-x86_64"
+        api "io.netty:netty-all:$nettyVersion"
+        api "com.esotericsoftware:kryo:$kryoVersion"
+        api "com.google.code.gson:gson:$gsonVersion"
+        api "com.fasterxml.jackson.dataformat:jackson-dataformat-smile:$jacksonVersion"
+        api "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+    }
+
+    task copyAndroidNatives {
+        file("libs/armeabi-v7a/").mkdirs()
+        file("libs/arm64-v8a/").mkdirs()
+        file("libs/x86/").mkdirs()
+        file("libs/x86_64/").mkdirs()
+
+        configurations.natives.copy().files.each { jar ->
+            def outputDir = null
+            if (jar.name.endsWith("natives-armeabi-v7a.jar")) outputDir = file("libs/armeabi-v7a")
+            if (jar.name.endsWith("natives-arm64-v8a.jar")) outputDir = file("libs/arm64-v8a")
+            if (jar.name.endsWith("natives-x86.jar")) outputDir = file("libs/x86")
+            if (jar.name.endsWith("natives-x86_64.jar")) outputDir = file("libs/x86_64")
+            if (outputDir != null) {
+                copy {
+                    from zipTree(jar)
+                    into outputDir
+                    include "*.so"
+                }
+            }
+        }
+    }
+} else {
+    // Fallback: plain java-library when Android SDK not available
+    apply plugin: 'java-library'
+
+    sourceSets {
+        main {
+            java.srcDirs = ['src/main/java']
+        }
+    }
+
+    dependencies {
+        implementation project(':core')
+    }
+}
