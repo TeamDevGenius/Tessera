@@ -1,0 +1,28 @@
+apply plugin: 'java-library'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['../src/main/java']
+        }
+        resources {
+            srcDirs = ['../src/main/resources']
+        }
+    }
+}
+
+dependencies {
+    api "com.badlogicgames.gdx:gdx:$gdxVersion"
+    api "io.netty:netty-all:$nettyVersion"
+    api "com.esotericsoftware:kryo:$kryoVersion"
+    api "com.google.code.gson:gson:$gsonVersion"
+    api "com.fasterxml.jackson.dataformat:jackson-dataformat-smile:$jacksonVersion"
+    api "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+}

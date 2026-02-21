@@ -7,3 +7,13 @@ logs
 hs_err_pid*.log
 *.*~
 
+
+# Gradle
+.gradle/
+build/
+local.properties
+android/libs/
+android/obj/
+android/bin/
+*.iml
+.idea/

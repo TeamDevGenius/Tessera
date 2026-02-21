@@ -1,0 +1,24 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        if (project.hasProperty('includeAndroid')) {
+            classpath "com.android.tools.build:gradle:$androidPluginVersion"
+        }
+    }
+}
+
+allprojects {
+    version = '1.0'
+    ext {
+        appName = 'tessera'
+    }
+    repositories {
+        mavenCentral()
+        maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+        maven { url 'https://oss.sonatype.org/content/repositories/releases/' }
+        google()
+    }
+}

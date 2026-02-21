@@ -1,0 +1,2 @@
+rootProject.name='tessera'
+include 'core', 'desktop', 'android'
