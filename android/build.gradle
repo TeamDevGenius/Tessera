@@ -44,6 +44,19 @@ if (rootProject.hasProperty('includeAndroid') || hasAndroid) {
                 proguardFiles getDefaultProguardFile('proguard-android.txt')
             }
         }
+
+        packaging {
+            resources {
+                excludes += [
+                    'META-INF/io.netty.versions.properties',
+                    'META-INF/NOTICE',
+                    'META-INF/NOTICE.txt',
+                    'META-INF/LICENSE',
+                    'META-INF/LICENSE.txt',
+                    'META-INF/INDEX.LIST'
+                ]
+            }
+        }
     }
 
     repositories {
