@@ -1,6 +1,8 @@
 package org.lwjgl.opengles;
 
-/** Stub for LWJGL GLES20. */
+import com.badlogic.gdx.Gdx;
+
+/** LWJGL GLES20 bridge – delegates to LibGDX {@code Gdx.gl}. */
 public class GLES20 {
     public static final int GL_BLEND = 0x0BE2;
     public static final int GL_DEPTH_TEST = 0x0B71;
@@ -14,10 +16,10 @@ public class GLES20 {
     public static final int GL_UNSIGNED_BYTE = 0x1401;
     public static final int GL_UNSIGNED_SHORT = 0x1403;
 
-    public static void glEnable(int cap) {}
-    public static void glDisable(int cap) {}
-    public static void glClear(int mask) {}
-    public static void glClearColor(float r, float g, float b, float a) {}
-    public static void glViewport(int x, int y, int w, int h) {}
-    public static void glBlendFunc(int sfactor, int dfactor) {}
+    public static void glEnable(int cap) { if (Gdx.gl != null) Gdx.gl.glEnable(cap); }
+    public static void glDisable(int cap) { if (Gdx.gl != null) Gdx.gl.glDisable(cap); }
+    public static void glClear(int mask) { if (Gdx.gl != null) Gdx.gl.glClear(mask); }
+    public static void glClearColor(float r, float g, float b, float a) { if (Gdx.gl != null) Gdx.gl.glClearColor(r, g, b, a); }
+    public static void glViewport(int x, int y, int w, int h) { if (Gdx.gl != null) Gdx.gl.glViewport(x, y, w, h); }
+    public static void glBlendFunc(int sfactor, int dfactor) { if (Gdx.gl != null) Gdx.gl.glBlendFunc(sfactor, dfactor); }
 }
