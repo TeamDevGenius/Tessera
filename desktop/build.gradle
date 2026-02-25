@@ -30,6 +30,22 @@ jar {
     archiveFileName = "${appName}-desktop.jar"
     manifest.attributes 'Main-Class': 'com.tessera.desktop.DesktopLauncher'
     dependsOn configurations.runtimeClasspath
-    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    // First: desktop launcher classes
+    from(sourceSets.main.output)
+    // Second: external dependencies (real LWJGL, LibGDX, etc.) – these MUST
+    // come before the core project so that real LWJGL classes take precedence
+    // over the compilation stubs in the core module.
+    from {
+        configurations.runtimeClasspath
+            .filter { !it.absolutePath.contains('/core/') }
+            .collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    // Third: core project classes (stubs only matter for classes that have
+    // no real counterpart, e.g. Nuklear, JOML).
+    from {
+        configurations.runtimeClasspath
+            .filter { it.absolutePath.contains('/core/') }
+            .collect { it.isDirectory() ? it : zipTree(it) }
+    }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }

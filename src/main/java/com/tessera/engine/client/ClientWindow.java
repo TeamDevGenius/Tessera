@@ -149,24 +149,42 @@ public class ClientWindow extends NKWindow {
                 resourceLoader.getResourceAsStream("builtin/icon32.png"),
                 resourceLoader.getResourceAsStream("builtin/icon256.png"));
 
-        /**
-         * Anything involving OpenGL must be done after the window has been created
-         */
-        popupMessage = new PopupMessage(ctx, this);
-        Theme.initialize(ctx);
-        gameScene = new GameScene(client, game, world);
-        game.setupClient(this, ctx, gameScene.ui);
-        topMenu = new TopMenu(client);
-
-
-        //init world
-        world.init(Client.userPlayer, Registrys.blocks.textures);
+        initGameComponents(game, world);
 
         if (settings.video_fullscreen) {
             enableFullscreen(settings.video_fullscreenSize.value);
         }
         saveAndApplySettings();   //DO THIS LAST Apply settings just in case the settings were not already applied
         showWindow();
+    }
+
+    /**
+     * Initialises game components (scenes, menus, registries, world) without
+     * touching the GLFW window.  Called by {@link #init} on the LWJGL path
+     * and directly from {@code TesseraApp} on the LibGDX path.
+     */
+    public void initGameComponents(Game game, World world) throws Exception {
+        if (settings == null) settings = Settings.load();
+
+        /**
+         * Anything involving OpenGL must be done after the window has been created
+         */
+        try {
+            popupMessage = new PopupMessage(ctx, this);
+        } catch (Exception e) {
+            System.err.println("PopupMessage init failed: " + e.getMessage());
+        }
+        try {
+            Theme.initialize(ctx);
+        } catch (Exception e) {
+            System.err.println("Theme init failed (font loading): " + e.getMessage());
+        }
+        gameScene = new GameScene(client, game, world);
+        game.setupClient(this, ctx, gameScene.ui);
+        topMenu = new TopMenu(client);
+
+        //init world
+        world.init(Client.userPlayer, Registrys.blocks.textures);
     }
 
 

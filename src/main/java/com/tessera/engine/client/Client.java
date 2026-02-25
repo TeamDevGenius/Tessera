@@ -67,6 +67,16 @@ public class Client {
     }
 
     public Client(String[] args, String gameVersion, Game game) throws Exception {
+        this(args, gameVersion, game, false);
+    }
+
+    /**
+     * @param skipGlfwInit when {@code true} the GLFW window setup is skipped
+     *                     and only game components are initialised. Use this
+     *                     when running inside a LibGDX {@code Game} where
+     *                     the window is already managed by LibGDX.
+     */
+    public Client(String[] args, String gameVersion, Game game, boolean skipGlfwInit) throws Exception {
         Client.GAME_VERSION = versionStringToNumber(gameVersion);
         this.game = game;
         System.out.println(Main.TITLE+ " ("+ GAME_VERSION + ") started on " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
@@ -107,7 +117,11 @@ public class Client {
         }
 
         window = new ClientWindow(title, this);
-        window.init(game, world);
+        if (skipGlfwInit) {
+            window.initGameComponents(game, world);
+        } else {
+            window.init(game, world);
+        }
     }
 
     private void registerCommands() {

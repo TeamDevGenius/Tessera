@@ -86,14 +86,19 @@ public class TesseraApp extends Game {
             Main.game = tesseraGame;
 
             // Client constructor parses args, creates ClientWindow, etc.
-            client = new Client(new String[0], VERSION, tesseraGame);
+            // Pass skipGlfwInit=true so the GLFW window setup is skipped –
+            // LibGDX already manages the window via Lwjgl3Application.
+            client = new Client(new String[0], VERSION, tesseraGame, true);
 
             // Expose client through Main so existing code (Main.getClient())
             // continues to work.
             setMainClient(client);
 
             Gdx.app.log(TITLE, "Engine initialised");
-        } catch (Exception e) {
+        } catch (Throwable e) {
+            // Catch Throwable (not just Exception) to handle NoClassDefFoundError,
+            // VerifyError, and other linkage problems that may arise from
+            // partially-ported LWJGL stubs.
             Gdx.app.error(TITLE, "Engine init failed – running in menu-only mode", e);
         }
     }
