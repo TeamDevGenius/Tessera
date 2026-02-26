@@ -51,6 +51,17 @@ public class TesseraApp extends Game {
         Main.skins = skins;
         Main.game  = game;
 
+        // Create the Client eagerly on the GL thread (matching the original Main.main() pattern).
+        // This sets up all GL objects (shaders, textures, GameScene, etc.) once at startup so
+        // they are always ready before any world-loading attempt begins.
+        try {
+            client = new Client(new String[0], VERSION, game);
+            Main.setClient(client);
+        } catch (Exception e) {
+            Gdx.app.error(TITLE, "Client init failed: " + e.getMessage(), e);
+            // client remains null; LoadingScreen will refuse to load until this is resolved.
+        }
+
         setScreen(new MainMenuScreen(this));
     }
 

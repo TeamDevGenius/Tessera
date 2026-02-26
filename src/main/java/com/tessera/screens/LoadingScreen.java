@@ -6,7 +6,6 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.tessera.Main;
 import com.tessera.TesseraApp;
 import com.tessera.engine.client.Client;
 import com.tessera.engine.server.Server;
@@ -78,23 +77,18 @@ public class LoadingScreen implements Screen {
         startLoading();
     }
 
-    /** Initialises the Client (if needed) and the Server on the GL thread. */
+    /** Initialises the Server on the GL thread. The Client is pre-initialised by TesseraApp.create(). */
     private void startLoading() {
-        if (TesseraApp.client == null) {
-            try {
-                TesseraApp.client = new Client(new String[0], TesseraApp.VERSION, TesseraApp.game);
-                Main.setClient(TesseraApp.client);
-            } catch (Exception ex) {
-                Gdx.app.error("LoadingScreen", "Client init failed: " + ex.getMessage(), ex);
-                loadingFailed = true;
-                errorMsg = errorString(ex);
-                return;
-            }
+        Client c = TesseraApp.client;
+        if (c == null) {
+            // Client failed to initialize at startup (logged in TesseraApp.create()).
+            loadingFailed = true;
+            errorMsg = "Game engine not initialized. Check startup logs.";
+            return;
         }
 
-        Client client = TesseraApp.client;
         progressData = new ProgressData("Loading World…");
-        Client.localServer = new Server(TesseraApp.game, Client.world, Client.userPlayer, client);
+        Client.localServer = new Server(TesseraApp.game, Client.world, Client.userPlayer, c);
         server = Client.localServer;
     }
 
