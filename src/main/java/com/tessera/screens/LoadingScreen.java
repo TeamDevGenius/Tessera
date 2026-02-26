@@ -11,17 +11,18 @@ import com.tessera.TesseraApp;
 import com.tessera.engine.client.Client;
 import com.tessera.engine.server.Server;
 import com.tessera.engine.server.multiplayer.NetworkJoinRequest;
-import com.tessera.engine.server.players.Player;
 import com.tessera.engine.server.world.data.WorldData;
 import com.tessera.engine.utils.ErrorHandler;
 import com.tessera.engine.utils.progress.ProgressData;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-
 /**
  * Shows a progress bar while the world is loading.
  * After loading completes it transitions to {@link GameScreen}.
+ *
+ * <p>World loading is driven from {@link #render(float)} (the LibGDX GL thread) one step
+ * per frame, matching the legacy {@code ProgressMenu} callback pattern.  This is required
+ * because {@code startGameUpdateEvent()} creates OpenGL objects (VAOs, VBOs) that must be
+ * allocated on the GL thread.</p>
  */
 public class LoadingScreen implements Screen {
 
@@ -34,17 +35,20 @@ public class LoadingScreen implements Screen {
     private Label statusLabel;
     private ProgressBar progressBar;
 
+    /** Set on the GL thread in {@link #startLoading()}; driven each frame in {@link #render}. */
     private ProgressData progressData;
-    private final AtomicBoolean loadingDone = new AtomicBoolean(false);
-    private final AtomicBoolean loadingFailed = new AtomicBoolean(false);
-    private final AtomicReference<String> errorMsg = new AtomicReference<>("");
+    private Server server;
+
+    private boolean loadingDone   = false;
+    private boolean loadingFailed = false;
+    private String  errorMsg      = "";
 
     public LoadingScreen(TesseraApp app, WorldData worldData) {
         this(app, worldData, null);
     }
 
     public LoadingScreen(TesseraApp app, WorldData worldData, NetworkJoinRequest joinRequest) {
-        this.app    = app;
+        this.app         = app;
         this.worldData   = worldData;
         this.joinRequest = joinRequest;
     }
@@ -74,88 +78,79 @@ public class LoadingScreen implements Screen {
         startLoading();
     }
 
+    /** Initialises the Client (if needed) and the Server on the GL thread. */
     private void startLoading() {
-        // Lazily initialise the game-engine Client (creates UserControlledPlayer, shaders, block registry, etc.)
         if (TesseraApp.client == null) {
             try {
                 TesseraApp.client = new Client(new String[0], TesseraApp.VERSION, TesseraApp.game);
-                // Register in Main so legacy code paths that call Main.getClient() work correctly.
                 Main.setClient(TesseraApp.client);
             } catch (Exception ex) {
                 Gdx.app.error("LoadingScreen", "Client init failed: " + ex.getMessage(), ex);
-                loadingFailed.set(true);
-                errorMsg.set("Game engine failed to initialise: " + ex.getMessage());
+                loadingFailed = true;
+                errorMsg = errorString(ex);
                 return;
             }
         }
 
         Client client = TesseraApp.client;
-
         progressData = new ProgressData("Loading World…");
-
         Client.localServer = new Server(TesseraApp.game, Client.world, Client.userPlayer, client);
-
-        final com.tessera.engine.server.Server server = Client.localServer;
-        final com.tessera.engine.utils.progress.ProgressData prog = progressData;
-
-        Thread loadThread = new Thread(() -> {
-            try {
-                // startGameUpdateEvent is a per-frame state machine; call in a loop.
-                while (!prog.isFinished() && !prog.isAborted()) {
-                    server.startGameUpdateEvent(worldData, prog, joinRequest);
-                    if (!prog.isFinished()) Thread.sleep(16); // ~60fps pacing
-                }
-            } catch (InterruptedException ignored) {
-                Thread.currentThread().interrupt();
-            } catch (Exception ex) {
-                com.tessera.engine.utils.ErrorHandler.report(ex);
-                prog.abort();
-                loadingFailed.set(true);
-                errorMsg.set(ex.getMessage() != null ? ex.getMessage() : ex.toString());
-            }
-        }, "world-loader");
-        loadThread.setDaemon(true);
-        loadThread.start();
+        server = Client.localServer;
     }
 
+    /**
+     * Called on the LibGDX GL thread every frame.
+     *
+     * <p>Each call advances the world-loading state machine by one step via
+     * {@code startGameUpdateEvent()}.  All OpenGL allocations (VAOs, VBOs, etc.)
+     * that occur during chunk preparation therefore happen on the correct thread.</p>
+     */
     @Override
     public void render(float delta) {
         Gdx.gl.glClearColor(0.05f, 0.05f, 0.1f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // Handle failure that occurred before progressData was created (e.g., Client init failed).
-        if (progressData == null && loadingFailed.get() && !loadingDone.getAndSet(true)) {
-            final String msg = errorMsg.get();
-            loadingFailed.set(false);
-            Gdx.app.postRunnable(() -> {
-                Gdx.app.error("LoadingScreen", "Load failed: " + msg);
-                app.setScreen(new MainMenuScreen(app));
-            });
-        }
-
-        if (progressData != null) {
-            float pct = (float)(progressData.bar.getProgress() * 100.0);
-            progressBar.setValue(pct);
-            String task = progressData.getTask();
-            if (task != null) statusLabel.setText(task);
-
-            if ((progressData.isFinished() || progressData.bar.isComplete()) && !loadingDone.getAndSet(true)) {
-                // Transition to game
-                Gdx.app.postRunnable(() -> {
-                    Client client = TesseraApp.client;
-                    if (client != null) {
-                        client.window.goToGamePage();
-                    }
-                    app.setScreen(new GameScreen(app));
-                });
-            }
-            if ((progressData.isAborted() || loadingFailed.get()) && !loadingDone.getAndSet(true)) {
-                loadingFailed.set(false);
-                final String msg = errorMsg.get();
-                Gdx.app.postRunnable(() -> {
-                    Gdx.app.error("LoadingScreen", "Load failed: " + msg);
+        if (!loadingDone) {
+            if (progressData == null) {
+                // Client init failed before progressData was created
+                if (loadingFailed) {
+                    loadingDone = true;
+                    Gdx.app.error("LoadingScreen", "Load failed: " + errorMsg);
                     app.setScreen(new MainMenuScreen(app));
-                });
+                    return;
+                }
+            } else {
+                // Advance the world-loading state machine one step per frame on the GL thread.
+                if (!progressData.isFinished() && !progressData.isAborted()) {
+                    try {
+                        server.startGameUpdateEvent(worldData, progressData, joinRequest);
+                    } catch (Exception ex) {
+                        ErrorHandler.report(ex);
+                        progressData.abort();
+                        loadingFailed = true;
+                        errorMsg = errorString(ex);
+                    }
+                }
+
+                // Update the progress UI.
+                float pct = (float)(progressData.bar.getProgress() * 100.0);
+                progressBar.setValue(pct);
+                String task = progressData.getTask();
+                if (task != null) statusLabel.setText(task);
+
+                if (progressData.isFinished() || progressData.bar.isComplete()) {
+                    loadingDone = true;
+                    Client client = TesseraApp.client;
+                    if (client != null) client.window.goToGamePage();
+                    app.setScreen(new GameScreen(app));
+                    return;
+                }
+                if (progressData.isAborted() || loadingFailed) {
+                    loadingDone = true;
+                    Gdx.app.error("LoadingScreen", "Load failed: " + errorMsg);
+                    app.setScreen(new MainMenuScreen(app));
+                    return;
+                }
             }
         }
 
@@ -170,5 +165,9 @@ public class LoadingScreen implements Screen {
     @Override public void dispose() {
         if (stage != null) { stage.dispose(); stage = null; }
         if (skin  != null) { skin.dispose();  skin  = null; }
+    }
+
+    private static String errorString(Exception ex) {
+        return ex.getMessage() != null ? ex.getMessage() : ex.toString();
     }
 }
