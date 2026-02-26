@@ -34,11 +34,27 @@ public class Shader {
 
     public void init(String vertSrc, String fragSrc) throws IOException {
         ShaderProgram.pedantic = false;
+        // Rewrite shader version for the current platform
+        vertSrc = adaptShaderSource(vertSrc);
+        fragSrc = adaptShaderSource(fragSrc);
         program = new ShaderProgram(vertSrc, fragSrc);
         if (!program.isCompiled()) {
             throw new IOException("Shader compilation failed: " + program.getLog());
         }
         bindAttributes();
+    }
+
+    /**
+     * Adapts GLSL 4.x shader source for the current platform.
+     * On Android/GLES3, replaces "#version 400 core" with "#version 300 es"
+     * and uncomments precision qualifiers.
+     */
+    private static String adaptShaderSource(String src) {
+        if (src == null) return src;
+        // Replace desktop GLSL version with OpenGL ES 3.0 version
+        src = src.replaceFirst("(?m)^\\s*#version\\s+\\d+\\s*(core|compatibility)?\\s*$",
+                "#version 300 es\nprecision mediump float;\nprecision mediump int;");
+        return src;
     }
 
     public void init(File vert, File frag) throws IOException {

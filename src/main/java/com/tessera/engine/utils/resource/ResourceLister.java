@@ -74,10 +74,26 @@ public class ResourceLister {
         System.out.println("List size: " + list.size());
         boolean isRunningAsJar = list.isEmpty();
 
-        //If we are runing as a jar file, try again
+        //If we are running as a jar file, try again
         if (isRunningAsJar) {
             pattern = Pattern.compile(compileInitRegex(false, INIT_RESOURCE_DIRECTORIES));
             list = ResourceLister._listAllJarfileResources(pattern).stream().toList();
+        }
+
+        // Fallback for Android: if the classpath scan is empty, try scanning the APK/JAR directly
+        // via the code source location (returns APK path on Android devices)
+        if (list.isEmpty()) {
+            try {
+                String jarPath = getPathToJar();
+                pattern = Pattern.compile(compileInitRegex(false, INIT_RESOURCE_DIRECTORIES));
+                list = _listAllJarfileResources(jarPath, pattern).stream().toList();
+                if (!list.isEmpty()) {
+                    isRunningAsJar = true;
+                    System.out.println("Fallback APK scan found " + list.size() + " resources");
+                }
+            } catch (Exception e) {
+                System.out.println("ResourceLister fallback scan failed: " + e.getMessage());
+            }
         }
 
         //Add all elements from the list to a string array
