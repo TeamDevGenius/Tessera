@@ -77,17 +77,25 @@ public class LoadingScreen implements Screen {
         Client client = TesseraApp.client;
         if (client == null) return;
 
-        String title = "Loading World…";
-        progressData = new ProgressData(title);
+        progressData = new ProgressData("Loading World…");
 
         Client.localServer = new Server(TesseraApp.game, Client.world, Client.userPlayer, client);
 
+        final com.tessera.engine.server.Server server = Client.localServer;
+        final com.tessera.engine.utils.progress.ProgressData prog = progressData;
+
         Thread loadThread = new Thread(() -> {
             try {
-                Client.localServer.startGameUpdateEvent(worldData, progressData, joinRequest);
+                // startGameUpdateEvent is a per-frame state machine; call in a loop.
+                while (!prog.isFinished() && !prog.isAborted()) {
+                    server.startGameUpdateEvent(worldData, prog, joinRequest);
+                    if (!prog.isFinished()) Thread.sleep(16); // ~60fps pacing
+                }
+            } catch (InterruptedException ignored) {
+                Thread.currentThread().interrupt();
             } catch (Exception ex) {
-                ErrorHandler.report(ex);
-                progressData.abort();
+                com.tessera.engine.utils.ErrorHandler.report(ex);
+                prog.abort();
                 loadingFailed.set(true);
                 errorMsg.set(ex.getMessage() != null ? ex.getMessage() : ex.toString());
             }

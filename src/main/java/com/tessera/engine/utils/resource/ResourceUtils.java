@@ -58,7 +58,14 @@ public class ResourceUtils {
     }
 
     public static File localFile(String path) {
-        return new File(LOCAL_DIR, path.replace("\\", File.separator));
+        // Normalize path: replace Windows backslashes
+        path = path.replace("\\", File.separator);
+        // localFile() is always relative to LOCAL_DIR.
+        // Callers historically pass "/res/..." style paths, so strip the leading separator.
+        while (path.startsWith("/") || path.startsWith(File.separator)) {
+            path = path.substring(1);
+        }
+        return new File(LOCAL_DIR, path);
     }
 
     public static File file(String path) {

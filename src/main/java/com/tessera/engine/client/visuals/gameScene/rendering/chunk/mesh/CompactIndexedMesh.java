@@ -27,12 +27,8 @@ public class CompactIndexedMesh extends Mesh {
 
         GL30.glBindVertexArray(vao);
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
-        GL20.glVertexAttribPointer(//Specifies how the data in the buffer is to be interpreted. In this case, it configures attribute 0 to expect 3 floats.
-                0, // attribute id
-                VALUES_PER_VERTEX, // size
-                GL11.GL_FLOAT, // typeReference
-                false, 0, 0
-        );
+        // Vertex data is packed as 3 unsigned integers per vertex (uvec3 in shader)
+        GL30.glVertexAttribIPointer(0, VALUES_PER_VERTEX, GL11.GL_UNSIGNED_INT, 0, 0);
         GL20.glEnableVertexAttribArray(0); //Enables the vertex attribute array at index 0.
         GL30.glBindVertexArray(0);
     }

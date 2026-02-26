@@ -160,7 +160,11 @@ public class GL11 {
     public static void glReadPixels(int x, int y, int width, int height, int format, int type, FloatBuffer pixels) {}
     public static void glAlphaFunc(int func, float ref) {}
     public static String glGetString(int name)  { return com.badlogic.gdx.Gdx.gl != null ? com.badlogic.gdx.Gdx.gl.glGetString(name) : ""; }
-    public static int  glGetInteger(int pname) { return com.badlogic.gdx.Gdx.gl != null ? com.badlogic.gdx.Gdx.gl.glGetError() : 0; }
+    public static int  glGetInteger(int pname) {
+        if (com.badlogic.gdx.Gdx.gl20 == null) return 0;
+        java.nio.IntBuffer buf = java.nio.ByteBuffer.allocateDirect(4).order(java.nio.ByteOrder.nativeOrder()).asIntBuffer();
+        com.badlogic.gdx.Gdx.gl20.glGetIntegerv(pname, buf); return buf.get(0);
+    }
     public static void glPixelStorei(int pname, int param) { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glPixelStorei(pname,param); }
     public static void glGenTextures(IntBuffer textures) {
         if (com.badlogic.gdx.Gdx.gl == null) return;

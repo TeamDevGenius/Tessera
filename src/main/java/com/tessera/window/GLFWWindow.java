@@ -1,8 +1,10 @@
 package com.tessera.window;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.tessera.window.utils.ValueSmoother;
 import org.joml.Vector2d;
+import org.lwjgl.glfw.GLFW;
 
 import java.awt.image.BufferedImage;
 
@@ -39,12 +41,20 @@ public abstract class GLFWWindow {
 
     public void setWindowPos(int x, int y) {}
 
-    public boolean isKeyPressed(int key) {
-        return false;
+    /**
+     * Translate a GLFW key code to a LibGDX Input.Keys code and check if it is pressed.
+     */
+    public boolean isKeyPressed(int glfwKey) {
+        if (Gdx.input == null) return false;
+        int gdxKey = glfwToGdxKey(glfwKey);
+        if (gdxKey < 0) return false;
+        return Gdx.input.isKeyPressed(gdxKey);
     }
 
-    public boolean isMouseButtonPressed(int button) {
-        return false;
+    public boolean isMouseButtonPressed(int glfwButton) {
+        if (Gdx.input == null) return false;
+        // GLFW: 0=left, 1=right, 2=middle  →  LibGDX: 0=left, 1=right, 2=middle
+        return Gdx.input.isButtonPressed(glfwButton);
     }
 
     public void destroyWindow() {
@@ -67,9 +77,9 @@ public abstract class GLFWWindow {
         }
     }
 
-    public int getWidth() { return Gdx.graphics != null ? Gdx.graphics.getWidth() : width; }
+    public int getWidth()  { return Gdx.graphics != null ? Gdx.graphics.getWidth()  : width;  }
     public int getHeight() { return Gdx.graphics != null ? Gdx.graphics.getHeight() : height; }
-    public int getDisplay_width() { return getWidth(); }
+    public int getDisplay_width()  { return getWidth(); }
     public int getDisplay_height() { return getHeight(); }
     public long getWindow() { return 1L; }
 
@@ -136,4 +146,64 @@ public abstract class GLFWWindow {
     }
 
     public BufferedImage readPixelsOfWindow() { return null; }
+
+    // -----------------------------------------------------------------------
+    // GLFW → LibGDX key mapping
+    // -----------------------------------------------------------------------
+    private static int glfwToGdxKey(int glfw) {
+        // Letters A-Z: GLFW 65-90 = LibGDX Input.Keys.A-Z (51-76)
+        if (glfw >= GLFW.GLFW_KEY_A && glfw <= GLFW.GLFW_KEY_Z) {
+            return Input.Keys.A + (glfw - GLFW.GLFW_KEY_A);
+        }
+        // Digits 0-9: GLFW 48-57 = LibGDX Input.Keys.NUM_0-9 (7-16)
+        if (glfw >= GLFW.GLFW_KEY_0 && glfw <= GLFW.GLFW_KEY_9) {
+            return Input.Keys.NUM_0 + (glfw - GLFW.GLFW_KEY_0);
+        }
+        switch (glfw) {
+            case GLFW.GLFW_KEY_SPACE:        return Input.Keys.SPACE;
+            case GLFW.GLFW_KEY_ENTER:        return Input.Keys.ENTER;
+            case GLFW.GLFW_KEY_ESCAPE:       return Input.Keys.ESCAPE;
+            case GLFW.GLFW_KEY_BACKSPACE:    return Input.Keys.BACKSPACE;
+            case GLFW.GLFW_KEY_TAB:          return Input.Keys.TAB;
+            case GLFW.GLFW_KEY_LEFT_SHIFT:   return Input.Keys.SHIFT_LEFT;
+            case GLFW.GLFW_KEY_RIGHT_SHIFT:  return Input.Keys.SHIFT_RIGHT;
+            case GLFW.GLFW_KEY_LEFT_CONTROL: return Input.Keys.CONTROL_LEFT;
+            case GLFW.GLFW_KEY_RIGHT_CONTROL:return Input.Keys.CONTROL_RIGHT;
+            case GLFW.GLFW_KEY_LEFT_ALT:     return Input.Keys.ALT_LEFT;
+            case GLFW.GLFW_KEY_RIGHT_ALT:    return Input.Keys.ALT_RIGHT;
+            case GLFW.GLFW_KEY_UP:           return Input.Keys.UP;
+            case GLFW.GLFW_KEY_DOWN:         return Input.Keys.DOWN;
+            case GLFW.GLFW_KEY_LEFT:         return Input.Keys.LEFT;
+            case GLFW.GLFW_KEY_RIGHT:        return Input.Keys.RIGHT;
+            case GLFW.GLFW_KEY_F1:           return Input.Keys.F1;
+            case GLFW.GLFW_KEY_F2:           return Input.Keys.F2;
+            case GLFW.GLFW_KEY_F3:           return Input.Keys.F3;
+            case GLFW.GLFW_KEY_F4:           return Input.Keys.F4;
+            case GLFW.GLFW_KEY_F5:           return Input.Keys.F5;
+            case GLFW.GLFW_KEY_F6:           return Input.Keys.F6;
+            case GLFW.GLFW_KEY_F7:           return Input.Keys.F7;
+            case GLFW.GLFW_KEY_F8:           return Input.Keys.F8;
+            case GLFW.GLFW_KEY_F9:           return Input.Keys.F9;
+            case GLFW.GLFW_KEY_F10:          return Input.Keys.F10;
+            case GLFW.GLFW_KEY_F11:          return Input.Keys.F11;
+            case GLFW.GLFW_KEY_F12:          return Input.Keys.F12;
+            case GLFW.GLFW_KEY_DELETE:       return Input.Keys.DEL;
+            case GLFW.GLFW_KEY_INSERT:       return Input.Keys.INSERT;
+            case GLFW.GLFW_KEY_HOME:         return Input.Keys.HOME;
+            case GLFW.GLFW_KEY_END:          return Input.Keys.END;
+            case GLFW.GLFW_KEY_PAGE_UP:      return Input.Keys.PAGE_UP;
+            case GLFW.GLFW_KEY_PAGE_DOWN:    return Input.Keys.PAGE_DOWN;
+            case GLFW.GLFW_KEY_MINUS:        return Input.Keys.MINUS;
+            case GLFW.GLFW_KEY_EQUAL:        return Input.Keys.EQUALS;
+            case GLFW.GLFW_KEY_LEFT_BRACKET: return Input.Keys.LEFT_BRACKET;
+            case GLFW.GLFW_KEY_RIGHT_BRACKET:return Input.Keys.RIGHT_BRACKET;
+            case GLFW.GLFW_KEY_SLASH:        return Input.Keys.SLASH;
+            case GLFW.GLFW_KEY_BACKSLASH:    return Input.Keys.BACKSLASH;
+            case GLFW.GLFW_KEY_PERIOD:       return Input.Keys.PERIOD;
+            case GLFW.GLFW_KEY_COMMA:        return Input.Keys.COMMA;
+            case GLFW.GLFW_KEY_APOSTROPHE:   return Input.Keys.APOSTROPHE;
+            case GLFW.GLFW_KEY_SEMICOLON:    return Input.Keys.SEMICOLON;
+            default:                         return -1;
+        }
+    }
 }
