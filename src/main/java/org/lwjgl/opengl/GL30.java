@@ -30,21 +30,47 @@ public class GL30 extends GL20C {
     public static final int GL_RED                  = 0x1903;
     public static final int GL_VERTEX_ARRAY_BINDING = 0x85B5;
 
-    public static int glGenVertexArrays() { return 0; }
-    public static void glGenVertexArrays(IntBuffer arrays) {}
-    public static void glBindVertexArray(int array) {}
-    public static void glDeleteVertexArrays(int array) {}
-    public static void glDeleteVertexArrays(IntBuffer arrays) {}
-    public static int glGenFramebuffers() { return 0; }
-    public static void glBindFramebuffer(int target, int framebuffer) {}
-    public static void glFramebufferTexture2D(int target, int attachment, int textarget, int texture, int level) {}
-    public static void glDeleteFramebuffers(int framebuffer) {}
-    public static int glCheckFramebufferStatus(int target) { return GL_FRAMEBUFFER_COMPLETE; }
-    public static int glGenRenderbuffers() { return 0; }
-    public static void glBindRenderbuffer(int target, int renderbuffer) {}
-    public static void glRenderbufferStorage(int target, int internalformat, int width, int height) {}
-    public static void glFramebufferRenderbuffer(int target, int attachment, int renderbuffertarget, int renderbuffer) {}
-    public static void glDeleteRenderbuffers(int renderbuffer) {}
-    public static void glGenerateMipmap(int target) {}
-    public static void glBlitFramebuffer(int srcX0, int srcY0, int srcX1, int srcY1, int dstX0, int dstY0, int dstX1, int dstY1, int mask, int filter) {}
+    public static int glGenVertexArrays() {
+        if (com.badlogic.gdx.Gdx.gl30 == null) return 0;
+        java.nio.IntBuffer buf = java.nio.ByteBuffer.allocateDirect(4).order(java.nio.ByteOrder.nativeOrder()).asIntBuffer();
+        com.badlogic.gdx.Gdx.gl30.glGenVertexArrays(1, buf); return buf.get(0);
+    }
+    public static void glGenVertexArrays(IntBuffer arrays) {
+        if (com.badlogic.gdx.Gdx.gl30 == null) return;
+        com.badlogic.gdx.Gdx.gl30.glGenVertexArrays(arrays.limit(), arrays);
+    }
+    public static void glBindVertexArray(int array) { if (com.badlogic.gdx.Gdx.gl30 != null) com.badlogic.gdx.Gdx.gl30.glBindVertexArray(array); }
+    public static void glDeleteVertexArrays(int array) {
+        if (com.badlogic.gdx.Gdx.gl30 == null) return;
+        java.nio.IntBuffer buf = java.nio.ByteBuffer.allocateDirect(4).order(java.nio.ByteOrder.nativeOrder()).asIntBuffer();
+        buf.put(0, array);
+        com.badlogic.gdx.Gdx.gl30.glDeleteVertexArrays(1, buf);
+    }
+    public static void glDeleteVertexArrays(IntBuffer arrays) {
+        if (com.badlogic.gdx.Gdx.gl30 != null) com.badlogic.gdx.Gdx.gl30.glDeleteVertexArrays(arrays.limit(), arrays);
+    }
+    /** Also wire glVertexAttribIPointer for integer vertex attributes (uvec3). */
+    public static void glVertexAttribIPointer(int index, int size, int type, int stride, long pointer) {
+        if (com.badlogic.gdx.Gdx.gl30 != null) com.badlogic.gdx.Gdx.gl30.glVertexAttribIPointer(index, size, type, stride, (int)pointer);
+    }
+    public static int glGenFramebuffers() {
+        if (com.badlogic.gdx.Gdx.gl20 == null) return 0;
+        return com.badlogic.gdx.Gdx.gl20.glGenFramebuffer();
+    }
+    public static void glBindFramebuffer(int target, int framebuffer) { if (com.badlogic.gdx.Gdx.gl20 != null) com.badlogic.gdx.Gdx.gl20.glBindFramebuffer(target, framebuffer); }
+    public static void glFramebufferTexture2D(int target, int attachment, int textarget, int texture, int level) { if (com.badlogic.gdx.Gdx.gl20 != null) com.badlogic.gdx.Gdx.gl20.glFramebufferTexture2D(target, attachment, textarget, texture, level); }
+    public static void glDeleteFramebuffers(int framebuffer) { if (com.badlogic.gdx.Gdx.gl20 != null) com.badlogic.gdx.Gdx.gl20.glDeleteFramebuffer(framebuffer); }
+    public static int glCheckFramebufferStatus(int target) { return com.badlogic.gdx.Gdx.gl20 != null ? com.badlogic.gdx.Gdx.gl20.glCheckFramebufferStatus(target) : GL_FRAMEBUFFER_COMPLETE; }
+    public static int glGenRenderbuffers() {
+        if (com.badlogic.gdx.Gdx.gl20 == null) return 0;
+        return com.badlogic.gdx.Gdx.gl20.glGenRenderbuffer();
+    }
+    public static void glBindRenderbuffer(int target, int renderbuffer) { if (com.badlogic.gdx.Gdx.gl20 != null) com.badlogic.gdx.Gdx.gl20.glBindRenderbuffer(target, renderbuffer); }
+    public static void glRenderbufferStorage(int target, int internalformat, int width, int height) { if (com.badlogic.gdx.Gdx.gl20 != null) com.badlogic.gdx.Gdx.gl20.glRenderbufferStorage(target, internalformat, width, height); }
+    public static void glFramebufferRenderbuffer(int target, int attachment, int renderbuffertarget, int renderbuffer) { if (com.badlogic.gdx.Gdx.gl20 != null) com.badlogic.gdx.Gdx.gl20.glFramebufferRenderbuffer(target, attachment, renderbuffertarget, renderbuffer); }
+    public static void glDeleteRenderbuffers(int renderbuffer) { if (com.badlogic.gdx.Gdx.gl20 != null) com.badlogic.gdx.Gdx.gl20.glDeleteRenderbuffer(renderbuffer); }
+    public static void glGenerateMipmap(int target) { if (com.badlogic.gdx.Gdx.gl20 != null) com.badlogic.gdx.Gdx.gl20.glGenerateMipmap(target); }
+    public static void glBlitFramebuffer(int srcX0, int srcY0, int srcX1, int srcY1, int dstX0, int dstY0, int dstX1, int dstY1, int mask, int filter) {
+        if (com.badlogic.gdx.Gdx.gl30 != null) com.badlogic.gdx.Gdx.gl30.glBlitFramebuffer(srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter);
+    }
 }

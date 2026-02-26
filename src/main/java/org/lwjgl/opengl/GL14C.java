@@ -15,6 +15,6 @@ public class GL14C extends GL13C {
     public static final int GL_DEPTH_COMPONENT   = 0x1902;
     public static final int GL_DEPTH_COMPONENT16 = 0x81A5;
 
-    public static void glBlendEquation(int mode) {}
-    public static void glBlendFuncSeparate(int sfactorRGB, int dfactorRGB, int sfactorAlpha, int dfactorAlpha) {}
+    public static void glBlendEquation(int mode) { if (com.badlogic.gdx.Gdx.gl20 != null) com.badlogic.gdx.Gdx.gl20.glBlendEquation(mode); }
+    public static void glBlendFuncSeparate(int sfactorRGB, int dfactorRGB, int sfactorAlpha, int dfactorAlpha) { if (com.badlogic.gdx.Gdx.gl20 != null) com.badlogic.gdx.Gdx.gl20.glBlendFuncSeparate(sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha); }
 }

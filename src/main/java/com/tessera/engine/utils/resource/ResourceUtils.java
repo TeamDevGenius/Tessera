@@ -35,11 +35,17 @@ public class ResourceUtils {
         System.out.println("\tLocal path: " + LOCAL_DIR);
         System.out.println("\tResource path: " + RESOURCE_DIR);
 
-        BLOCK_ICON_DIR = file("items\\blocks\\icons");
+        BLOCK_ICON_DIR = file("items" + File.separator + "blocks" + File.separator + "icons");
     }
 
     public static void initialize(boolean gameDevResources, String appDataDir) {
-        APP_DATA_DIR = new File(System.getenv("LOCALAPPDATA"), appDataDir == null ? "tessera" : appDataDir);
+        String localAppData = System.getenv("LOCALAPPDATA"); // Windows
+        if (localAppData == null) {
+            // Linux / Android: use user home or app-writable directory
+            localAppData = System.getProperty("user.home");
+            if (localAppData == null) localAppData = ".";
+        }
+        APP_DATA_DIR = new File(localAppData, appDataDir == null ? "tessera" : appDataDir);
         APP_DATA_DIR.mkdirs();
         System.out.println("\tApp Data path: " + APP_DATA_DIR);
 
@@ -52,10 +58,11 @@ public class ResourceUtils {
     }
 
     public static File localFile(String path) {
-        return new File(LOCAL_DIR, path);
+        return new File(LOCAL_DIR, path.replace("\\", File.separator));
     }
 
     public static File file(String path) {
+        path = path.replace("\\", File.separator);
         if (path.startsWith(RESOURCE_DIR.getAbsolutePath())) {
             return new File(path);
         }
@@ -63,7 +70,7 @@ public class ResourceUtils {
     }
 
     public static File appDataFile(String path) {
-        return new File(APP_DATA_DIR, path);
+        return new File(APP_DATA_DIR, path.replace("\\", File.separator));
     }
 
     public static File worldFile(String path) {

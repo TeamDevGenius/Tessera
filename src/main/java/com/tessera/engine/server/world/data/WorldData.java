@@ -126,7 +126,7 @@ public class WorldData {
         }
         data.lastSaved = System.currentTimeMillis();
         String json = gson.toJson(data);
-        Files.writeString(Paths.get(getDirectory() + "\\" + INFO_FILENAME), json);
+        Files.writeString(Paths.get(getDirectory().getAbsolutePath(), INFO_FILENAME), json);
     }
 
     public void makeNew(String name, int size, Terrain terrain, int seed) {

@@ -26,21 +26,42 @@ public class GL15 extends GL14C {
     public static final int GL_QUERY_RESULT_AVAILABLE = 0x8867;
     public static final int GL_SAMPLES_PASSED       = 0x8914;
 
-    public static int glGenBuffers() { return 0; }
-    public static void glGenBuffers(IntBuffer buffers) {}
-    public static void glBindBuffer(int target, int buffer) {}
-    public void glBufferData(int target, long size, int usage) {}
-    public static void glBufferData(int target, ByteBuffer data, int usage) {}
-    public static void glBufferData(int target, FloatBuffer data, int usage) {}
-    public static void glBufferData(int target, IntBuffer data, int usage) {}
-    public static void glBufferData(int target, float[] data, int usage) {}
-    public static void glBufferData(int target, int[] data, int usage) {}
-    public static void glBufferData(int target, short[] data, int usage) {}
-    public static void glBufferSubData(int target, long offset, ByteBuffer data) {}
-    public static void glBufferSubData(int target, long offset, FloatBuffer data) {}
-    public static void glBufferSubData(int target, long offset, IntBuffer data) {}
-    public static void glDeleteBuffers(int buffer) {}
-    public static void glDeleteBuffers(IntBuffer buffers) {}
+    public static int glGenBuffers() { return com.badlogic.gdx.Gdx.gl20 != null ? com.badlogic.gdx.Gdx.gl20.glGenBuffer() : 0; }
+    public static void glGenBuffers(IntBuffer buffers) {
+        if (com.badlogic.gdx.Gdx.gl20 == null) return;
+        for (int i = 0; i < buffers.limit(); i++) buffers.put(i, com.badlogic.gdx.Gdx.gl20.glGenBuffer());
+    }
+    public static void glBindBuffer(int target, int buffer) { if (com.badlogic.gdx.Gdx.gl20 != null) com.badlogic.gdx.Gdx.gl20.glBindBuffer(target, buffer); }
+    public void glBufferData(int target, long size, int usage) { if (com.badlogic.gdx.Gdx.gl20 != null) com.badlogic.gdx.Gdx.gl20.glBufferData(target, (int)size, null, usage); }
+    public static void glBufferData(int target, ByteBuffer data, int usage)  { if (com.badlogic.gdx.Gdx.gl20 != null) com.badlogic.gdx.Gdx.gl20.glBufferData(target, data.limit(), data, usage); }
+    public static void glBufferData(int target, FloatBuffer data, int usage) { if (com.badlogic.gdx.Gdx.gl20 != null) com.badlogic.gdx.Gdx.gl20.glBufferData(target, data.limit() * 4, data, usage); }
+    public static void glBufferData(int target, IntBuffer data, int usage)   { if (com.badlogic.gdx.Gdx.gl20 != null) com.badlogic.gdx.Gdx.gl20.glBufferData(target, data.limit() * 4, data, usage); }
+    public static void glBufferData(int target, float[] data, int usage) {
+        if (com.badlogic.gdx.Gdx.gl20 == null) return;
+        FloatBuffer buf = java.nio.ByteBuffer.allocateDirect(data.length*4).order(java.nio.ByteOrder.nativeOrder()).asFloatBuffer();
+        buf.put(data).flip();
+        com.badlogic.gdx.Gdx.gl20.glBufferData(target, data.length * 4, buf, usage);
+    }
+    public static void glBufferData(int target, int[] data, int usage) {
+        if (com.badlogic.gdx.Gdx.gl20 == null) return;
+        IntBuffer buf = java.nio.ByteBuffer.allocateDirect(data.length*4).order(java.nio.ByteOrder.nativeOrder()).asIntBuffer();
+        buf.put(data).flip();
+        com.badlogic.gdx.Gdx.gl20.glBufferData(target, data.length * 4, buf, usage);
+    }
+    public static void glBufferData(int target, short[] data, int usage) {
+        if (com.badlogic.gdx.Gdx.gl20 == null) return;
+        java.nio.ShortBuffer buf = java.nio.ByteBuffer.allocateDirect(data.length*2).order(java.nio.ByteOrder.nativeOrder()).asShortBuffer();
+        buf.put(data).flip();
+        com.badlogic.gdx.Gdx.gl20.glBufferData(target, data.length * 2, buf, usage);
+    }
+    public static void glBufferSubData(int target, long offset, ByteBuffer data)  { if (com.badlogic.gdx.Gdx.gl20 != null) com.badlogic.gdx.Gdx.gl20.glBufferSubData(target,(int)offset,data.limit(),data); }
+    public static void glBufferSubData(int target, long offset, FloatBuffer data) { if (com.badlogic.gdx.Gdx.gl20 != null) com.badlogic.gdx.Gdx.gl20.glBufferSubData(target,(int)offset,data.limit()*4,data); }
+    public static void glBufferSubData(int target, long offset, IntBuffer data)   { if (com.badlogic.gdx.Gdx.gl20 != null) com.badlogic.gdx.Gdx.gl20.glBufferSubData(target,(int)offset,data.limit()*4,data); }
+    public static void glDeleteBuffers(int buffer) { if (com.badlogic.gdx.Gdx.gl20 != null) com.badlogic.gdx.Gdx.gl20.glDeleteBuffer(buffer); }
+    public static void glDeleteBuffers(IntBuffer buffers) {
+        if (com.badlogic.gdx.Gdx.gl20 == null) return;
+        for (int i = 0; i < buffers.limit(); i++) com.badlogic.gdx.Gdx.gl20.glDeleteBuffer(buffers.get(i));
+    }
     public static ByteBuffer glMapBuffer(int target, int access, long length, ByteBuffer oldBuffer) { return ByteBuffer.allocateDirect((int)length).order(java.nio.ByteOrder.nativeOrder()); }
     public static ByteBuffer glMapBuffer(int target, int access) { return ByteBuffer.allocateDirect(0).order(java.nio.ByteOrder.nativeOrder()); }
     public static boolean glUnmapBuffer(int target) { return true; }

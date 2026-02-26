@@ -1,64 +1,56 @@
 package com.tessera;
 
-import com.badlogic.gdx.ApplicationAdapter;
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.InputMultiplexer;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.tessera.content.vanilla.TesseraGame;
+import com.tessera.engine.SkinRegistry;
+import com.tessera.engine.client.Client;
+import com.tessera.engine.utils.resource.ResourceLister;
+import com.tessera.screens.MainMenuScreen;
 
 /**
- * Main LibGDX ApplicationAdapter for Tessera.
- * Replaces the LWJGL-based ClientWindow and Main entry point.
+ * Main LibGDX Game entry point for Tessera.
+ * Manages screens and initialises the game engine.
  * Works on Android (via AndroidLauncher) and Desktop (via DesktopLauncher).
  */
-public class TesseraApp extends ApplicationAdapter {
+public class TesseraApp extends Game {
 
     public static final String TITLE = "Tessera";
     public static final String VERSION = "1.8.0";
 
-    private SpriteBatch batch;
-    private BitmapFont font;
-    private Stage uiStage;
+    /** Shared client instance – set once the user starts/loads a world. */
+    public static Client client;
+    public static TesseraGame game;
+    public static SkinRegistry skins;
+
+    /** Singleton accessor used by screens that need the game instance. */
+    private static TesseraApp instance;
+    public static TesseraApp getInstance() { return instance; }
 
     @Override
     public void create() {
-        batch = new SpriteBatch();
-        font = new BitmapFont();
-        uiStage = new Stage(new ScreenViewport());
+        instance = this;
+        Gdx.app.log(TITLE, "Starting version " + VERSION);
 
-        InputMultiplexer multiplexer = new InputMultiplexer();
-        multiplexer.addProcessor(uiStage);
-        Gdx.input.setInputProcessor(multiplexer);
+        // Initialise resource lister (loads classpath resource list)
+        try {
+            ResourceLister.init();
+        } catch (Exception e) {
+            Gdx.app.error(TITLE, "ResourceLister init failed: " + e.getMessage());
+        }
 
-        Gdx.app.log(TITLE, "Started version " + VERSION);
-    }
+        skins = new SkinRegistry();
+        game  = new TesseraGame();
 
-    @Override
-    public void render() {
-        Gdx.gl.glClearColor(0.2f, 0.3f, 0.4f, 1f);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-
-        uiStage.act(Gdx.graphics.getDeltaTime());
-        uiStage.draw();
-
-        batch.begin();
-        font.draw(batch, TITLE + " " + VERSION, 10, Gdx.graphics.getHeight() - 10);
-        font.draw(batch, "FPS: " + Gdx.graphics.getFramesPerSecond(), 10, Gdx.graphics.getHeight() - 30);
-        batch.end();
-    }
-
-    @Override
-    public void resize(int width, int height) {
-        uiStage.getViewport().update(width, height, true);
+        setScreen(new MainMenuScreen(this));
     }
 
     @Override
     public void dispose() {
-        batch.dispose();
-        font.dispose();
-        uiStage.dispose();
+        super.dispose();
+        if (client != null) {
+            try { client.stopGame(); } catch (Exception ignored) {}
+            client = null;
+        }
     }
 }

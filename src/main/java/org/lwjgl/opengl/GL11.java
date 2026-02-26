@@ -114,51 +114,57 @@ public class GL11 {
     public static final int GL_LUMINANCE       = 0x1909;
     public static final int GL_LUMINANCE_ALPHA = 0x190A;
 
-    // Methods - no-op stubs
-    public static void glEnable(int cap) {}
-    public static void glDisable(int cap) {}
-    public static void glClear(int mask) {}
-    public static void glClearColor(float r, float g, float b, float a) {}
-    public static void glClearDepth(double depth) {}
-    public static void glViewport(int x, int y, int w, int h) {}
-    public static void glDepthFunc(int func) {}
-    public static void glDepthMask(boolean flag) {}
-    public static void glBlendFunc(int sfactor, int dfactor) {}
-    public static void glCullFace(int mode) {}
-    public static void glFrontFace(int mode) {}
-    public static void glPolygonMode(int face, int mode) {}
-    public static void glLineWidth(float width) {}
-    public static void glPointSize(float size) {}
-    public static void glScissor(int x, int y, int w, int h) {}
-    public static int glGenTextures() { return 0; }
-    public static void glBindTexture(int target, int texture) {}
-    public static void glDeleteTextures(int texture) {}
-    public static void glDeleteTextures(IntBuffer textures) {}
-    public static void glTexImage2D(int target, int level, int internalformat, int width, int height, int border, int format, int type, ByteBuffer pixels) {}
-    public static void glTexImage2D(int target, int level, int internalformat, int width, int height, int border, int format, int type, IntBuffer pixels) {}
-    public static void glTexImage2D(int target, int level, int internalformat, int width, int height, int border, int format, int type, int[] pixels) {}
-    public static void glTexImage2D(int target, int level, int internalformat, int width, int height, int border, int format, int type, int pboOffset) {}
-    public static void glTexSubImage2D(int target, int level, int xoffset, int yoffset, int width, int height, int format, int type, ByteBuffer pixels) {}
-    public static void glTexParameteri(int target, int pname, int param) {}
-    public static void glTexParameterf(int target, int pname, float param) {}
-    public static int glGetTexLevelParameteri(int target, int level, int pname) { return 0; }
-    public static void glGetTexImage(int target, int level, int format, int type, ByteBuffer pixels) {}
+    // Methods – delegate to LibGDX GL20
+    public static void glEnable(int cap)  { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glEnable(cap); }
+    public static void glDisable(int cap) { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glDisable(cap); }
+    public static void glClear(int mask)  { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glClear(mask); }
+    public static void glClearColor(float r, float g, float b, float a) { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glClearColor(r,g,b,a); }
+    public static void glClearDepth(double depth) { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glClearDepthf((float)depth); }
+    public static void glViewport(int x, int y, int w, int h) { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glViewport(x,y,w,h); }
+    public static void glDepthFunc(int func)  { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glDepthFunc(func); }
+    public static void glDepthMask(boolean f) { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glDepthMask(f); }
+    public static void glBlendFunc(int s, int d) { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glBlendFunc(s,d); }
+    public static void glCullFace(int mode)   { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glCullFace(mode); }
+    public static void glFrontFace(int mode)  { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glFrontFace(mode); }
+    public static void glPolygonMode(int face, int mode) {} // no-op: desktop only
+    public static void glLineWidth(float width)  { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glLineWidth(width); }
+    public static void glPointSize(float size) {} // no-op: no GLES equivalent
+    public static void glScissor(int x, int y, int w, int h) { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glScissor(x,y,w,h); }
+    public static int  glGenTextures() { return com.badlogic.gdx.Gdx.gl != null ? com.badlogic.gdx.Gdx.gl.glGenTexture() : 0; }
+    public static void glBindTexture(int target, int tex) { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glBindTexture(target,tex); }
+    public static void glDeleteTextures(int tex) { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glDeleteTexture(tex); }
+    public static void glDeleteTextures(IntBuffer textures) {
+        if (com.badlogic.gdx.Gdx.gl == null) return;
+        for (int i = 0; i < textures.limit(); i++) com.badlogic.gdx.Gdx.gl.glDeleteTexture(textures.get(i));
+    }
+    public static void glTexImage2D(int target, int level, int internalformat, int width, int height, int border, int format, int type, ByteBuffer pixels)  { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glTexImage2D(target,level,internalformat,width,height,border,format,type,pixels); }
+    public static void glTexImage2D(int target, int level, int internalformat, int width, int height, int border, int format, int type, IntBuffer pixels)    { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glTexImage2D(target,level,internalformat,width,height,border,format,type,pixels); }
+    public static void glTexImage2D(int target, int level, int internalformat, int width, int height, int border, int format, int type, int[] pixels)        {} // no direct equivalent
+    public static void glTexImage2D(int target, int level, int internalformat, int width, int height, int border, int format, int type, int pboOffset)       {} // PBO no-op on GLES
+    public static void glTexSubImage2D(int target, int level, int xoffset, int yoffset, int width, int height, int format, int type, ByteBuffer pixels)      { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glTexSubImage2D(target,level,xoffset,yoffset,width,height,format,type,pixels); }
+    public static void glTexParameteri(int target, int pname, int param)   { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glTexParameteri(target,pname,param); }
+    public static void glTexParameterf(int target, int pname, float param) { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glTexParameterf(target,pname,param); }
+    public static int  glGetTexLevelParameteri(int target, int level, int pname) { return 0; }
+    public static void glGetTexImage(int target, int level, int format, int type, ByteBuffer pixels)  {}
     public static void glGetTexImage(int target, int level, int format, int type, FloatBuffer pixels) {}
-    public static void glDrawArrays(int mode, int first, int count) {}
-    public static void glDrawElements(int mode, int count, int type, long indices) {}
-    public static void glDrawElements(int mode, int count, int type, ByteBuffer indices) {}
+    public static void glDrawArrays(int mode, int first, int count) { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glDrawArrays(mode,first,count); }
+    public static void glDrawElements(int mode, int count, int type, long indices)        { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glDrawElements(mode,count,type,(int)indices); }
+    public static void glDrawElements(int mode, int count, int type, ByteBuffer indices)  { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glDrawElements(mode,count,type,indices); }
     public static void glDrawElements(int mode, IntBuffer indices) {}
     public static void glShadeModel(int mode) {}
-    public static int glGetError() { return 0; }
-    public static void glFinish() {}
-    public static void glFlush() {}
-    public static void glColorMask(boolean r, boolean g, boolean b, boolean a) {}
-    public static void glReadPixels(int x, int y, int width, int height, int format, int type, ByteBuffer pixels) {}
+    public static int  glGetError() { return com.badlogic.gdx.Gdx.gl != null ? com.badlogic.gdx.Gdx.gl.glGetError() : 0; }
+    public static void glFinish() { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glFinish(); }
+    public static void glFlush()  {}
+    public static void glColorMask(boolean r, boolean g, boolean b, boolean a) { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glColorMask(r,g,b,a); }
+    public static void glReadPixels(int x, int y, int width, int height, int format, int type, ByteBuffer pixels)  { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glReadPixels(x,y,width,height,format,type,pixels); }
     public static void glReadPixels(int x, int y, int width, int height, int format, int type, FloatBuffer pixels) {}
     public static void glAlphaFunc(int func, float ref) {}
-    public static String glGetString(int name) { return ""; }
-    public static int glGetInteger(int pname) { return 0; }
-    public static void glPixelStorei(int pname, int param) {}
-    public static void glGenTextures(IntBuffer textures) {}
+    public static String glGetString(int name)  { return com.badlogic.gdx.Gdx.gl != null ? com.badlogic.gdx.Gdx.gl.glGetString(name) : ""; }
+    public static int  glGetInteger(int pname) { return com.badlogic.gdx.Gdx.gl != null ? com.badlogic.gdx.Gdx.gl.glGetError() : 0; }
+    public static void glPixelStorei(int pname, int param) { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glPixelStorei(pname,param); }
+    public static void glGenTextures(IntBuffer textures) {
+        if (com.badlogic.gdx.Gdx.gl == null) return;
+        for (int i = 0; i < textures.limit(); i++) textures.put(i, com.badlogic.gdx.Gdx.gl.glGenTexture());
+    }
 }
 
