@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.tessera.Main;
 import com.tessera.TesseraApp;
 import com.tessera.engine.client.Client;
 import com.tessera.engine.server.Server;
@@ -78,6 +79,8 @@ public class LoadingScreen implements Screen {
         if (TesseraApp.client == null) {
             try {
                 TesseraApp.client = new Client(new String[0], TesseraApp.VERSION, TesseraApp.game);
+                // Register in Main so legacy code paths that call Main.getClient() work correctly.
+                Main.setClient(TesseraApp.client);
             } catch (Exception ex) {
                 Gdx.app.error("LoadingScreen", "Client init failed: " + ex.getMessage(), ex);
                 loadingFailed.set(true);
@@ -120,11 +123,21 @@ public class LoadingScreen implements Screen {
         Gdx.gl.glClearColor(0.05f, 0.05f, 0.1f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        // Handle failure that occurred before progressData was created (e.g., Client init failed).
+        if (progressData == null && loadingFailed.get() && !loadingDone.getAndSet(true)) {
+            final String msg = errorMsg.get();
+            loadingFailed.set(false);
+            Gdx.app.postRunnable(() -> {
+                Gdx.app.error("LoadingScreen", "Load failed: " + msg);
+                app.setScreen(new MainMenuScreen(app));
+            });
+        }
+
         if (progressData != null) {
             float pct = (float)(progressData.bar.getProgress() * 100.0);
             progressBar.setValue(pct);
-            String msg = progressData.getTask();
-            if (msg != null) statusLabel.setText(msg);
+            String task = progressData.getTask();
+            if (task != null) statusLabel.setText(task);
 
             if ((progressData.isFinished() || progressData.bar.isComplete()) && !loadingDone.getAndSet(true)) {
                 // Transition to game
@@ -136,9 +149,11 @@ public class LoadingScreen implements Screen {
                     app.setScreen(new GameScreen(app));
                 });
             }
-            if (progressData.isAborted() || loadingFailed.get()) {
+            if ((progressData.isAborted() || loadingFailed.get()) && !loadingDone.getAndSet(true)) {
+                loadingFailed.set(false);
+                final String msg = errorMsg.get();
                 Gdx.app.postRunnable(() -> {
-                    Gdx.app.error("LoadingScreen", "Load failed: " + errorMsg.get());
+                    Gdx.app.error("LoadingScreen", "Load failed: " + msg);
                     app.setScreen(new MainMenuScreen(app));
                 });
             }
