@@ -46,6 +46,11 @@ public class TesseraApp extends Game {
         skins = new SkinRegistry();
         game  = new TesseraGame();
 
+        // Synchronise Main's static fields so legacy code paths (e.g. Main.skins.get(),
+        // Main.game.drawCursor()) resolve correctly without any code changes in those classes.
+        Main.skins = skins;
+        Main.game  = game;
+
         setScreen(new MainMenuScreen(this));
     }
 
