@@ -114,6 +114,16 @@ public class BlockRegistry {
 
     private void generateBlock3DIcons(Block[] blocks) {
         if (!blockIconsDirectory.exists()) {
+            // Skip GLFW-based icon generation when running inside LibGDX (e.g. Android / desktop
+            // LibGDX backend).  BlockIconRenderer creates a hidden GLFW window on a background
+            // thread and blocks the calling thread via SimpleWaitLock.  In the LibGDX path the
+            // GL thread must not block, and LibGDX UI does not use Nuklear NkImage icons at all.
+            if (com.badlogic.gdx.Gdx.app != null) {
+                if (!blockIconsDirectory.mkdirs()) {
+                    System.out.println("BlockRegistry: could not create icons dir – will skip icon generation every launch");
+                }
+                return;
+            }
             System.out.println("========================================\n" +
                     "Generating 3d block icons to disk..." +
                     "\n========================================");
