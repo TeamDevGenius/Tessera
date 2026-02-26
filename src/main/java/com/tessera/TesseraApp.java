@@ -6,6 +6,7 @@ import com.tessera.content.vanilla.TesseraGame;
 import com.tessera.engine.SkinRegistry;
 import com.tessera.engine.client.Client;
 import com.tessera.engine.utils.resource.ResourceLister;
+import com.tessera.engine.utils.resource.ResourceUtils;
 import com.tessera.screens.MainMenuScreen;
 
 /**
@@ -31,6 +32,9 @@ public class TesseraApp extends Game {
     public void create() {
         instance = this;
         Gdx.app.log(TITLE, "Starting version " + VERSION);
+
+        // Initialise resource paths FIRST – other code depends on APP_DATA_DIR / WORLDS_DIR.
+        ResourceUtils.initialize(false, null);
 
         // Initialise resource lister (loads classpath resource list)
         try {

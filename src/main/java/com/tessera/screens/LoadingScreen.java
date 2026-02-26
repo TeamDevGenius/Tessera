@@ -74,8 +74,19 @@ public class LoadingScreen implements Screen {
     }
 
     private void startLoading() {
+        // Lazily initialise the game-engine Client (creates UserControlledPlayer, shaders, block registry, etc.)
+        if (TesseraApp.client == null) {
+            try {
+                TesseraApp.client = new Client(new String[0], TesseraApp.VERSION, TesseraApp.game);
+            } catch (Exception ex) {
+                Gdx.app.error("LoadingScreen", "Client init failed: " + ex.getMessage(), ex);
+                loadingFailed.set(true);
+                errorMsg.set("Game engine failed to initialise: " + ex.getMessage());
+                return;
+            }
+        }
+
         Client client = TesseraApp.client;
-        if (client == null) return;
 
         progressData = new ProgressData("Loading World…");
 

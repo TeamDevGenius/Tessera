@@ -9,10 +9,8 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.tessera.TesseraApp;
-import com.tessera.engine.client.Client;
 import com.tessera.engine.server.world.WorldsHandler;
 import com.tessera.engine.server.world.data.WorldData;
-import com.tessera.engine.utils.ErrorHandler;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -117,15 +115,8 @@ public class LoadWorldScreen implements Screen {
     }
 
     private void loadWorld(WorldData worldData) {
-        try {
-            if (TesseraApp.client == null) {
-                TesseraApp.client = new Client(new String[0], TesseraApp.VERSION, TesseraApp.game);
-            }
-            app.setScreen(new LoadingScreen(app, worldData));
-        } catch (Exception ex) {
-            Gdx.app.error("LoadWorldScreen", "Failed: " + ex.getMessage(), ex);
-            statusLabel.setText("Error: " + ex.getMessage());
-        }
+        // Client is initialised lazily inside LoadingScreen.
+        app.setScreen(new LoadingScreen(app, worldData));
     }
 
     @Override

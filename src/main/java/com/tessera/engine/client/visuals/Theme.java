@@ -6,6 +6,7 @@ package com.tessera.engine.client.visuals;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Paths;
 
 import com.tessera.engine.utils.resource.ResourceUtils;
 import com.tessera.window.nuklear.NKFontUtils;
@@ -43,7 +44,9 @@ public class Theme {
 
 
     public static void initialize(NkContext context) throws IOException {
-        fontBuffer = NKFontUtils.loadFontData(ResourceUtils.RESOURCE_DIR + "\\fonts\\Press_Start_2P\\PressStart2P-Regular.ttf");
+        fontBuffer = NKFontUtils.loadFontData(
+                Paths.get(ResourceUtils.RESOURCE_DIR.getAbsolutePath(),
+                        "fonts", "Press_Start_2P", "PressStart2P-Regular.ttf").toString());
         initFonts(context);
         nk_style_set_font(context, font_10);
 

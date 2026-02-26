@@ -12,9 +12,9 @@ import com.tessera.TesseraApp;
 import com.tessera.content.vanilla.terrain.DevTerrain;
 import com.tessera.content.vanilla.terrain.FlatTerrain;
 import com.tessera.content.vanilla.terrain.defaultTerrain.DefaultTerrain;
-import com.tessera.engine.client.Client;
 import com.tessera.engine.server.GameMode;
 import com.tessera.engine.server.world.Terrain;
+import com.tessera.engine.server.world.WorldsHandler;
 import com.tessera.engine.server.world.data.WorldData;
 
 import java.util.Random;
@@ -30,8 +30,7 @@ public class NewWorldScreen implements Screen {
 
     private TextField nameField;
     private TextField seedField;
-    private Label gameModeLabel;
-    private Label terrainLabel;
+    private Label statusLabel;
     private GameMode currentMode = GameMode.ADVENTURE;
     private int terrainIndex = 0;
 
@@ -57,6 +56,10 @@ public class NewWorldScreen implements Screen {
 
         root.add(new Label("NEW WORLD", skin, "title")).padBottom(20).row();
 
+        // Status / error feedback
+        statusLabel = new Label("", skin);
+        root.add(statusLabel).padBottom(8).row();
+
         // World name
         root.add(new Label("World Name:", skin)).left().padBottom(4).row();
         nameField = new TextField("My World", skin);
@@ -68,20 +71,17 @@ public class NewWorldScreen implements Screen {
         root.add(seedField).width(300).padBottom(12).row();
 
         // Game Mode toggle
-        root.add(new Label("Game Mode:", skin)).left().padBottom(4).row();
-        gameModeLabel = new Label(currentMode.toString(), skin);
-        TextButton gameModeBtn = new TextButton("Change: " + currentMode, skin);
+        TextButton gameModeBtn = new TextButton("Mode: " + currentMode, skin);
         gameModeBtn.addListener(new ClickListener() {
             @Override public void clicked(InputEvent e, float x, float y) {
                 int next = (currentMode.ordinal() + 1) % GameMode.values().length;
                 currentMode = GameMode.values()[next];
-                gameModeBtn.setText("Change: " + currentMode);
+                gameModeBtn.setText("Mode: " + currentMode);
             }
         });
         root.add(gameModeBtn).width(300).height(40).padBottom(12).row();
 
         // Terrain toggle
-        root.add(new Label("Terrain:", skin)).left().padBottom(4).row();
         TextButton terrainBtn = new TextButton("Terrain: " + TERRAINS[terrainIndex].name, skin);
         terrainBtn.addListener(new ClickListener() {
             @Override public void clicked(InputEvent e, float x, float y) {
@@ -112,7 +112,7 @@ public class NewWorldScreen implements Screen {
 
     private void createWorld() {
         String worldName = nameField.getText().trim();
-        if (worldName.isEmpty()) worldName = "World";
+        if (worldName.isEmpty()) worldName = "My World";
 
         String seedText = seedField.getText().trim();
         int seed = seedText.isEmpty() ? new Random().nextInt(Integer.MAX_VALUE) : parseSeed(seedText);
@@ -121,22 +121,24 @@ public class NewWorldScreen implements Screen {
         int worldSize = 5; // Default world size in chunks
 
         try {
-            // Initialize the client if not already done
-            if (TesseraApp.client == null) {
-                TesseraApp.client = new Client(new String[0], TesseraApp.VERSION, TesseraApp.game);
+            // Build WorldData and persist it – no Client/GL needed for this step.
+            WorldData info = new WorldData();
+            info.makeNew(worldName, worldSize, terrain, seed);
+            info.data.gameMode = currentMode;
+
+            if (WorldsHandler.worldNameAlreadyExists(info.getName())) {
+                statusLabel.setText("World name already exists!");
+                return;
             }
 
-            boolean created = TesseraApp.client.makeNewWorld(worldName, worldSize, terrain, seed, currentMode);
-            if (created) {
-                // Load the world
-                WorldData worldData = new WorldData();
-                worldData.load(com.tessera.engine.server.world.WorldsHandler.worldFile(worldName));
-                app.setScreen(new LoadingScreen(app, worldData));
-            }
+            WorldsHandler.makeNewWorld(info);
+
+            // Navigate to the loading screen; it will init the Client lazily.
+            app.setScreen(new LoadingScreen(app, info));
+
         } catch (Exception ex) {
             Gdx.app.error("NewWorldScreen", "Failed to create world: " + ex.getMessage(), ex);
-            // Show error – for now just go back
-            app.setScreen(new MainMenuScreen(app));
+            statusLabel.setText("Error: " + (ex.getMessage() != null ? ex.getMessage() : ex.toString()));
         }
     }
 

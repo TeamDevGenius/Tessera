@@ -31,15 +31,21 @@ public class SettingsScreen implements Screen {
         Gdx.input.setInputProcessor(stage);
         skin  = ScreenUtils.createSkin();
 
+        // Use the live settings if the Client has already initialised them,
+        // otherwise load/create a standalone copy.
         Settings settings = ClientWindow.settings != null
                 ? ClientWindow.settings
-                : new Settings().initVariables();
+                : Settings.load();
 
         Table root = new Table();
         root.setFillParent(true);
         stage.addActor(root);
 
         root.add(new Label("SETTINGS", skin, "title")).padBottom(20).row();
+
+        // Status / feedback label
+        Label statusLabel = new Label("", skin);
+        root.add(statusLabel).padBottom(8).row();
 
         // View Distance
         root.add(new Label("View Distance: " + settings.viewDistance.value, skin)).padBottom(10).row();
@@ -58,8 +64,13 @@ public class SettingsScreen implements Screen {
         TextButton saveBtn = new TextButton("SAVE", skin);
         saveBtn.addListener(new ClickListener() {
             @Override public void clicked(InputEvent e, float x, float y) {
-                settings.save();
-                app.setScreen(new MainMenuScreen(app));
+                try {
+                    settings.save();
+                    statusLabel.setText("Settings saved!");
+                } catch (Exception ex) {
+                    Gdx.app.error("SettingsScreen", "Save failed: " + ex.getMessage(), ex);
+                    statusLabel.setText("Save failed: " + ex.getMessage());
+                }
             }
         });
         root.add(saveBtn).width(300).height(48).padBottom(10).row();
