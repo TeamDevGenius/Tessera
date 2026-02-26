@@ -1,8 +1,9 @@
 package org.lwjgl.opengl;
 
+import com.badlogic.gdx.Gdx;
 import java.nio.*;
 
-/** Stub for LWJGL GL15. */
+/** LWJGL GL15 bridge – delegates buffer operations to LibGDX {@code Gdx.gl20}. */
 public class GL15 extends GL14C {
     public static final int GL_ARRAY_BUFFER         = 0x8892;
     public static final int GL_ELEMENT_ARRAY_BUFFER = 0x8893;
@@ -26,23 +27,91 @@ public class GL15 extends GL14C {
     public static final int GL_QUERY_RESULT_AVAILABLE = 0x8867;
     public static final int GL_SAMPLES_PASSED       = 0x8914;
 
-    public static int glGenBuffers() { return 0; }
-    public static void glGenBuffers(IntBuffer buffers) {}
-    public static void glBindBuffer(int target, int buffer) {}
-    public void glBufferData(int target, long size, int usage) {}
-    public static void glBufferData(int target, ByteBuffer data, int usage) {}
-    public static void glBufferData(int target, FloatBuffer data, int usage) {}
-    public static void glBufferData(int target, IntBuffer data, int usage) {}
-    public static void glBufferData(int target, float[] data, int usage) {}
-    public static void glBufferData(int target, int[] data, int usage) {}
-    public static void glBufferData(int target, short[] data, int usage) {}
-    public static void glBufferSubData(int target, long offset, ByteBuffer data) {}
-    public static void glBufferSubData(int target, long offset, FloatBuffer data) {}
-    public static void glBufferSubData(int target, long offset, IntBuffer data) {}
-    public static void glDeleteBuffers(int buffer) {}
-    public static void glDeleteBuffers(IntBuffer buffers) {}
-    public static ByteBuffer glMapBuffer(int target, int access, long length, ByteBuffer oldBuffer) { return ByteBuffer.allocateDirect((int)length).order(java.nio.ByteOrder.nativeOrder()); }
-    public static ByteBuffer glMapBuffer(int target, int access) { return ByteBuffer.allocateDirect(0).order(java.nio.ByteOrder.nativeOrder()); }
+    private static final IntBuffer tmpBuf = ByteBuffer.allocateDirect(4).order(ByteOrder.nativeOrder()).asIntBuffer();
+
+    public static int glGenBuffers() {
+        if (Gdx.gl20 == null) return 0;
+        tmpBuf.clear();
+        Gdx.gl20.glGenBuffers(1, tmpBuf);
+        return tmpBuf.get(0);
+    }
+    public static void glGenBuffers(IntBuffer buffers) {
+        if (Gdx.gl20 != null) Gdx.gl20.glGenBuffers(buffers.remaining(), buffers);
+    }
+    public static void glBindBuffer(int target, int buffer) { if (Gdx.gl20 != null) Gdx.gl20.glBindBuffer(target, buffer); }
+    public void glBufferData(int target, long size, int usage) {
+        if (Gdx.gl20 != null) Gdx.gl20.glBufferData(target, (int) size, null, usage);
+    }
+    public static void glBufferData(int target, ByteBuffer data, int usage) {
+        if (Gdx.gl20 != null) Gdx.gl20.glBufferData(target, data.remaining(), data, usage);
+    }
+    public static void glBufferData(int target, FloatBuffer data, int usage) {
+        if (Gdx.gl20 == null) return;
+        ByteBuffer bb = ByteBuffer.allocateDirect(data.remaining() * 4).order(ByteOrder.nativeOrder());
+        bb.asFloatBuffer().put(data);
+        bb.rewind();
+        Gdx.gl20.glBufferData(target, bb.remaining(), bb, usage);
+    }
+    public static void glBufferData(int target, IntBuffer data, int usage) {
+        if (Gdx.gl20 == null) return;
+        ByteBuffer bb = ByteBuffer.allocateDirect(data.remaining() * 4).order(ByteOrder.nativeOrder());
+        bb.asIntBuffer().put(data);
+        bb.rewind();
+        Gdx.gl20.glBufferData(target, bb.remaining(), bb, usage);
+    }
+    public static void glBufferData(int target, float[] data, int usage) {
+        if (Gdx.gl20 == null) return;
+        ByteBuffer bb = ByteBuffer.allocateDirect(data.length * 4).order(ByteOrder.nativeOrder());
+        bb.asFloatBuffer().put(data);
+        bb.rewind();
+        Gdx.gl20.glBufferData(target, bb.remaining(), bb, usage);
+    }
+    public static void glBufferData(int target, int[] data, int usage) {
+        if (Gdx.gl20 == null) return;
+        ByteBuffer bb = ByteBuffer.allocateDirect(data.length * 4).order(ByteOrder.nativeOrder());
+        bb.asIntBuffer().put(data);
+        bb.rewind();
+        Gdx.gl20.glBufferData(target, bb.remaining(), bb, usage);
+    }
+    public static void glBufferData(int target, short[] data, int usage) {
+        if (Gdx.gl20 == null) return;
+        ByteBuffer bb = ByteBuffer.allocateDirect(data.length * 2).order(ByteOrder.nativeOrder());
+        bb.asShortBuffer().put(data);
+        bb.rewind();
+        Gdx.gl20.glBufferData(target, bb.remaining(), bb, usage);
+    }
+    public static void glBufferSubData(int target, long offset, ByteBuffer data) {
+        if (Gdx.gl20 != null) Gdx.gl20.glBufferSubData(target, (int) offset, data.remaining(), data);
+    }
+    public static void glBufferSubData(int target, long offset, FloatBuffer data) {
+        if (Gdx.gl20 == null) return;
+        ByteBuffer bb = ByteBuffer.allocateDirect(data.remaining() * 4).order(ByteOrder.nativeOrder());
+        bb.asFloatBuffer().put(data);
+        bb.rewind();
+        Gdx.gl20.glBufferSubData(target, (int) offset, bb.remaining(), bb);
+    }
+    public static void glBufferSubData(int target, long offset, IntBuffer data) {
+        if (Gdx.gl20 == null) return;
+        ByteBuffer bb = ByteBuffer.allocateDirect(data.remaining() * 4).order(ByteOrder.nativeOrder());
+        bb.asIntBuffer().put(data);
+        bb.rewind();
+        Gdx.gl20.glBufferSubData(target, (int) offset, bb.remaining(), bb);
+    }
+    public static void glDeleteBuffers(int buffer) {
+        if (Gdx.gl20 == null) return;
+        tmpBuf.clear();
+        tmpBuf.put(0, buffer);
+        Gdx.gl20.glDeleteBuffers(1, tmpBuf);
+    }
+    public static void glDeleteBuffers(IntBuffer buffers) {
+        if (Gdx.gl20 != null) Gdx.gl20.glDeleteBuffers(buffers.remaining(), buffers);
+    }
+    public static ByteBuffer glMapBuffer(int target, int access, long length, ByteBuffer oldBuffer) {
+        return ByteBuffer.allocateDirect((int) length).order(ByteOrder.nativeOrder());
+    }
+    public static ByteBuffer glMapBuffer(int target, int access) {
+        return ByteBuffer.allocateDirect(0).order(ByteOrder.nativeOrder());
+    }
     public static boolean glUnmapBuffer(int target) { return true; }
     public static void glGenQueries(IntBuffer ids) {}
     public static int glGenQueries() { return 0; }

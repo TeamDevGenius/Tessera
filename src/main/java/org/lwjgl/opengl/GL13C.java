@@ -35,5 +35,5 @@ public class GL13C extends GL12C {
     public static final int GL_TEXTURE30 = 0x84DE;
     public static final int GL_TEXTURE31 = 0x84DF;
 
-    public static void glActiveTexture(int texture) {}
+    public static void glActiveTexture(int texture) { if (com.badlogic.gdx.Gdx.gl != null) com.badlogic.gdx.Gdx.gl.glActiveTexture(texture); }
 }
