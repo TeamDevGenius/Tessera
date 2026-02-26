@@ -31,6 +31,11 @@ public class Main {
         return localClient;
     }
 
+    /** Used by LibGDX entry path (TesseraApp) to register the shared Client instance. */
+    public static void setClient(Client client) {
+        localClient = client;
+    }
+
     public static Server getServer() {
         return Client.localServer;
     }

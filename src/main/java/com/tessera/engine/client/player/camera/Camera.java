@@ -1,5 +1,6 @@
 package com.tessera.engine.client.player.camera;
 
+import com.badlogic.gdx.Gdx;
 import com.tessera.engine.client.ClientWindow;
 import com.tessera.engine.client.Client;
 import com.tessera.engine.server.block.BlockRegistry;
@@ -14,7 +15,6 @@ import com.tessera.engine.utils.MiscUtils;
 import com.tessera.engine.utils.math.MathUtils;
 import com.tessera.engine.server.world.chunk.BlockData;
 
-import java.awt.*;
 import java.lang.Math;
 import java.nio.IntBuffer;
 
@@ -40,9 +40,7 @@ public class Camera {
     public static final double TWO_PI = Math.PI * 2;
     public final static Vector3f up = new Vector3f(0f, -1f, 0f);
     private final float sensitivity = 0.35f;
-    private Point mouse = new Point(0, 0);
     private final IntBuffer windowX, windowY;
-    private Robot robot;
     private final UserControlledPlayer player;
     private final ClientWindow window;
 
@@ -118,12 +116,6 @@ public class Camera {
         simplifiedPanTilt = new Vector2i();
         cameraViewRay = new Ray();
 
-        try {
-            robot = new Robot();
-        } catch (AWTException ex) {
-            ErrorHandler.report(ex);
-        }
-
         target = new Vector3f();
         position = new Vector3f();
         right = new Vector3f(1f, 0f, 0f);
@@ -139,35 +131,24 @@ public class Camera {
     public final CursorRay cursorRay;
 
     public void hideMouse() {
-        GLFW.glfwSetInputMode(window.getWindow(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_HIDDEN);
+        if (Gdx.input != null) Gdx.input.setCursorCatched(true);
     }
 
     public void showMouse() {
-        GLFW.glfwSetInputMode(window.getWindow(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
+        if (Gdx.input != null) Gdx.input.setCursorCatched(false);
     }
 
     public void update(boolean holdMouse) {
         if (holdMouse) {
             hideMouse();
-            mouse = MouseInfo.getPointerInfo().getLocation();
         } else showMouse();
 
-        window.getWindowPos(windowX, windowY);
-
-        int x = windowX.get(0);
-        int y = windowY.get(0);
         int w = window.getWidth();
         int h = window.getHeight();
 
-        int middleX = w / 2 + x;
-        int middleY = h / 2 + y;
-
-        int deltaX = mouse.x - middleX;
-        int deltaY = mouse.y - middleY;
-
-        // The window Position is a little off, could be being multiplied by some factor
-        if (holdMouse) robot.mouseMove(middleX, middleY); // target mouse
-
+        // Use LibGDX delta mouse position for look control
+        int deltaX = holdMouse && Gdx.input != null ? Gdx.input.getDeltaX() : 0;
+        int deltaY = holdMouse && Gdx.input != null ? Gdx.input.getDeltaY() : 0;
 
         if (holdMouse) {
             if (getThirdPersonDist() > 0) {

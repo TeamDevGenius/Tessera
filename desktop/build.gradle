@@ -30,6 +30,20 @@ jar {
     archiveFileName = "${appName}-desktop.jar"
     manifest.attributes 'Main-Class': 'com.tessera.desktop.DesktopLauncher'
     dependsOn configurations.runtimeClasspath
-    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    from {
+        def coreBuildDir = project(':core').buildDir.absolutePath
+        configurations.runtimeClasspath.collect { File f ->
+            if (f.isDirectory()) {
+                // Exclude org.lwjgl stub packages from classpath directories (e.g. core build dir);
+                // the real LWJGL classes from gdx-backend-lwjgl3 are included by the JARs below.
+                fileTree(f).matching { exclude 'org/lwjgl/**' }
+            } else if (f.absolutePath.startsWith(coreBuildDir)) {
+                // Exclude org.lwjgl stubs from the :core project JAR so real LWJGL wins.
+                zipTree(f).matching { exclude 'org/lwjgl/**' }
+            } else {
+                zipTree(f)
+            }
+        }
+    }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
