@@ -34,7 +34,7 @@ public class ErrorHandler {
         parent.setVisible(true);
         parent.pack();
 
-        parent.setIconImage(popupWindowIcon.getImage());
+        parent.setIconImage(getPopupWindowIcon() != null ? getPopupWindowIcon().getImage() : null);
         parent.setTitle(title);
         parent.setLocationRelativeTo(null);
         parent.setAlwaysOnTop(true);
@@ -42,7 +42,18 @@ public class ErrorHandler {
         parent.setSize(380, 240);
     }
 
-    private final static ImageIcon popupWindowIcon = new ImageIcon(ResourceUtils.file("logo.png").getAbsolutePath());
+    private static javax.swing.ImageIcon popupWindowIcon;
+
+    private static javax.swing.ImageIcon getPopupWindowIcon() {
+        if (popupWindowIcon == null) {
+            try {
+                popupWindowIcon = new javax.swing.ImageIcon(ResourceUtils.file("logo.png").getAbsolutePath());
+            } catch (Throwable ignored) {
+                // javax.swing not available on this platform
+            }
+        }
+        return popupWindowIcon;
+    }
     private static final String localDir = new File("").getAbsolutePath();
     private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH_mm_ss");
 

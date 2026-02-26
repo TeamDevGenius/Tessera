@@ -4,20 +4,21 @@
  */
 package com.tessera.engine.server.block;
 
+import com.badlogic.gdx.graphics.Pixmap;
 import com.tessera.engine.utils.FileUtils;
 import com.tessera.engine.utils.resource.ResourceLister;
 import com.tessera.engine.utils.resource.ResourceLoader;
+import com.tessera.window.utils.IOUtil;
 import com.tessera.window.utils.texture.Texture;
 import com.tessera.window.utils.texture.TextureRequest;
 import com.tessera.window.utils.texture.TextureUtils;
 
-import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.imageio.ImageIO;
 
 import static com.tessera.engine.client.visuals.gameScene.rendering.chunk.meshers.bufferSet.vertexSet.CompactVertexSet.MAX_BLOCK_ANIMATION_LENGTH;
 
@@ -88,12 +89,15 @@ public class BlockArrayTexture {
         }
 
         //Read the first image and get the texture size
-        BufferedImage img;
         for (String file : allFiles) {
             System.out.println("Testing file: " + file);
             if (fileIsImage(file)) {
-                img = ImageIO.read(resourceLoader.getResourceAsStream(file));
-                textureSize = img.getWidth();
+                try (InputStream is = resourceLoader.getResourceAsStream(file)) {
+                    byte[] bytes = IOUtil.inputStreamToBytes(is);
+                    Pixmap pixmap = new Pixmap(bytes, 0, bytes.length);
+                    textureSize = pixmap.getWidth();
+                    pixmap.dispose();
+                }
                 System.out.println("Texture size: " + textureSize);
                 break;
             }
@@ -144,21 +148,25 @@ public class BlockArrayTexture {
                 textureMap.put(textureKey, index.get());
                 fileMap.put(textureKey, file);
 
-
-                BufferedImage image = ImageIO.read(resourceLoader.getResourceAsStream(file));
-                if (image.getWidth() < image.getHeight()) {//if the image is not square, split it up
-                    int lengthMultiplier = image.getHeight() / image.getWidth();
-                    for (int j = 0; j < lengthMultiplier; j++) {
-                        imageFiles.add(new TextureRequest(file, 0, j * image.getWidth(), image.getWidth(), image.getWidth()));
+                try (InputStream is = resourceLoader.getResourceAsStream(file)) {
+                    byte[] bytes = IOUtil.inputStreamToBytes(is);
+                    Pixmap pixmap = new Pixmap(bytes, 0, bytes.length);
+                    int imgWidth = pixmap.getWidth();
+                    int imgHeight = pixmap.getHeight();
+                    pixmap.dispose();
+                    if (imgWidth < imgHeight) {//if the image is not square, split it up
+                        int lengthMultiplier = imgHeight / imgWidth;
+                        for (int j = 0; j < lengthMultiplier; j++) {
+                            imageFiles.add(new TextureRequest(file, 0, j * imgWidth, imgWidth, imgWidth));
+                            index.getAndAdd(1);
+                        }
+                        if (lengthMultiplier > MAX_BLOCK_ANIMATION_LENGTH)
+                            lengthMultiplier = MAX_BLOCK_ANIMATION_LENGTH;
+                        animationMap.put(textureKey, lengthMultiplier);
+                    } else {
+                        imageFiles.add(new TextureRequest(file));
                         index.getAndAdd(1);
                     }
-                    if (lengthMultiplier > MAX_BLOCK_ANIMATION_LENGTH)
-                        lengthMultiplier = MAX_BLOCK_ANIMATION_LENGTH;
-//                        System.out.println("Splitting " + name + " into " + lengthMultiplier + " pieces");
-                    animationMap.put(textureKey, lengthMultiplier);
-                } else {
-                    imageFiles.add(new TextureRequest(file));
-                    index.getAndAdd(1);
                 }
             }
         }

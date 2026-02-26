@@ -104,4 +104,21 @@ public final class IOUtil {
         return memSlice(buffer);
     }
 
+    /**
+     * Reads an InputStream fully and returns the raw data as a byte array.
+     *
+     * @param source the input stream to read
+     * @return the data as byte array
+     * @throws IOException if an IO error occurs
+     */
+    public static byte[] inputStreamToBytes(InputStream source) throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        byte[] chunk = new byte[4096];
+        int n;
+        while ((n = source.read(chunk)) != -1) {
+            bos.write(chunk, 0, n);
+        }
+        return bos.toByteArray();
+    }
+
 }

@@ -199,11 +199,13 @@ public class TextureUtils {
         // Create a new buffer for the section
         ByteBuffer section = MemoryUtil.memAlloc(file.regionWidth * file.regionHeight * 4);
 
-        // Copy pixels from the full image to the section buffer
+        // Copy pixels from the full image to the section buffer using ByteBuffer operations
         for (int y = 0; y < file.regionHeight; y++) {
             int fullImageOffset = ((file.regionY + y) * imageWidth + file.regionX) * 4;
             int sectionOffset = y * file.regionWidth * 4;
-            MemoryUtil.memCopy(MemoryUtil.memAddress(fullImage) + fullImageOffset, MemoryUtil.memAddress(section) + sectionOffset, file.regionWidth * 4);
+            for (int i = 0; i < file.regionWidth * 4; i++) {
+                section.put(sectionOffset + i, fullImage.get(fullImageOffset + i));
+            }
         }
         return section;
     }

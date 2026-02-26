@@ -55,9 +55,14 @@ public class TesseraApp extends ApplicationAdapter {
                 ResourceLister.init();
                 SkinRegistry skins = new SkinRegistry();
                 TesseraGame game = new TesseraGame();
+                // Save in Main statics (non-GL fields)
+                Main.skins = skins;
+                Main.game = game;
+                // GL initialization must happen on the render thread
                 Gdx.app.postRunnable(() -> {
                     try {
                         client = new Client(new String[0], VERSION, game);
+                        Main.localClient = client;
                         initialized = true;
                         Gdx.app.log(TITLE, "Game engine initialized");
                         buildMainMenuUI();
