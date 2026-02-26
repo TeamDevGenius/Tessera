@@ -198,15 +198,19 @@ public class TextureUtils {
     public static ByteBuffer makeRegionOfImage(ByteBuffer fullImage, TextureRequest file, int imageWidth, int imageHeight) {
         // Create a new buffer for the section
         ByteBuffer section = MemoryUtil.memAlloc(file.regionWidth * file.regionHeight * 4);
+        int rowBytes = file.regionWidth * 4;
 
-        // Copy pixels from the full image to the section buffer using ByteBuffer operations
+        // Copy rows from fullImage into section using bulk ByteBuffer operations
         for (int y = 0; y < file.regionHeight; y++) {
             int fullImageOffset = ((file.regionY + y) * imageWidth + file.regionX) * 4;
-            int sectionOffset = y * file.regionWidth * 4;
-            for (int i = 0; i < file.regionWidth * 4; i++) {
-                section.put(sectionOffset + i, fullImage.get(fullImageOffset + i));
-            }
+            int sectionOffset = y * rowBytes;
+            // Create a view into the source row and copy it in one bulk operation
+            ByteBuffer srcRow = fullImage.duplicate();
+            srcRow.position(fullImageOffset).limit(fullImageOffset + rowBytes);
+            section.position(sectionOffset);
+            section.put(srcRow);
         }
+        section.rewind();
         return section;
     }
 

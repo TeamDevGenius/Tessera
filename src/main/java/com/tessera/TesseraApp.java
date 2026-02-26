@@ -27,6 +27,7 @@ public class TesseraApp extends ApplicationAdapter {
 
     public static final String TITLE = "Tessera";
     public static final String VERSION = "1.8.0";
+    private static final int MAX_WORLD_SEED = 100_000;
 
     private SpriteBatch batch;
     private BitmapFont font;
@@ -213,7 +214,7 @@ public class TesseraApp extends ApplicationAdapter {
                 if (!name.isEmpty()) {
                     boolean ok = client.makeNewWorld(name, 512,
                             new DefaultTerrain(),
-                            (int) (Math.random() * 100000),
+                            (int) (Math.random() * MAX_WORLD_SEED),
                             GameMode.FREEPLAY);
                     if (ok) showLoadWorldUI();
                 }

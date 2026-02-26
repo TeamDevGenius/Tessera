@@ -4,8 +4,6 @@ import com.badlogic.gdx.Gdx;
 import com.tessera.window.utils.ValueSmoother;
 import org.joml.Vector2d;
 
-import java.awt.image.BufferedImage;
-
 /**
  * Window abstraction layer backed by LibGDX instead of GLFW.
  * Replaces the LWJGL GLFW implementation for Android/LibGDX compatibility.
@@ -135,5 +133,5 @@ public abstract class GLFWWindow {
         if (y != null) y.put(0, 0);
     }
 
-    public BufferedImage readPixelsOfWindow() { return null; }
+    public Object readPixelsOfWindow() { return null; }
 }

@@ -120,8 +120,9 @@ public class Camera {
 
         try {
             robot = new Robot();
-        } catch (AWTException ex) {
-            ErrorHandler.report(ex);
+        } catch (Throwable ex) {
+            // Robot not available on all platforms (e.g., Android)
+            ErrorHandler.log(ex);
         }
 
         target = new Vector3f();
@@ -166,7 +167,7 @@ public class Camera {
         int deltaY = mouse.y - middleY;
 
         // The window Position is a little off, could be being multiplied by some factor
-        if (holdMouse) robot.mouseMove(middleX, middleY); // target mouse
+        if (holdMouse && robot != null) robot.mouseMove(middleX, middleY); // target mouse
 
 
         if (holdMouse) {
