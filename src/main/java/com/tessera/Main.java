@@ -36,16 +36,23 @@ public class Main {
     }
 
 
-    public static void main(String[] args) throws Exception {
+    /**
+     * Initializes the game engine (TesseraGame, Client, window, registries, etc.).
+     * Called by both the original LWJGL entry point ({@link #main}) and the
+     * LibGDX entry point ({@link com.tessera.TesseraApp}).
+     */
+    public static void initialize(String[] args) throws Exception {
         System.out.println("Client started: " + VERSION);
-        ResourceLister.init();//This takes almost 10s, so it mind as well come first
+        ResourceLister.init(); // This takes almost 10s, so it may as well come first
 
         skins = new SkinRegistry();
         game = new TesseraGame();
 
         localClient = new Client(args, VERSION, game);
+    }
 
-
+    public static void main(String[] args) throws Exception {
+        initialize(args);
 
         try {
             getClient().window.startWindowThread();

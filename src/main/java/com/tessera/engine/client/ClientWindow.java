@@ -115,6 +115,27 @@ public class ClientWindow extends NKWindow {
         }
     }
 
+    /**
+     * Renders a single frame. Called each frame by the LibGDX render loop
+     * ({@link com.tessera.TesseraApp#render()}) instead of the blocking
+     * {@link #startWindowThread()} loop used by the original LWJGL entry point.
+     */
+    public void renderFrame() {
+        try {
+            beginScreenshot();
+            startFrame();
+            Client.frameTester.__startFrame();
+            render();
+            MemoryProfiler.update();
+            if (Client.memoryGraph != null) Client.memoryGraph.update();
+            Client.frameTester.__endFrame();
+            endFrame();
+            endScreenshot();
+        } catch (IOException e) {
+            ErrorHandler.report("Render error", e);
+        }
+    }
+
     public void init(Game game, World world) throws Exception {
         GLFWWindow.initGLFW();
         settings = Settings.load();
