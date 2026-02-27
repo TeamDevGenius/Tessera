@@ -11,8 +11,8 @@ public class AndroidLauncher extends AndroidApplication {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         AndroidApplicationConfiguration config = new AndroidApplicationConfiguration();
-        config.useGL30 = false;
-        config.numSamples = 2;
+        config.useGL30 = true; // Enable GLES 3.0 for texture arrays
+        config.numSamples = 0; // Disable MSAA for performance
         config.useAccelerometer = false;
         config.useCompass = false;
         initialize(new TesseraApp(), config);

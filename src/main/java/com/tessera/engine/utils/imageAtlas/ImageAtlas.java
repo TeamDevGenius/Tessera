@@ -1,54 +1,29 @@
 package com.tessera.engine.utils.imageAtlas;
 
-import java.awt.Image;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import javax.imageio.ImageIO;
 
 public class ImageAtlas {
 
-    /**
-     * @return the individualTextureSize
-     */
     public int getIndividualTextureSize() {
         return individualTextureSize;
     }
 
-    /**
-     * @return the imageSize
-     */
     public int getImageWidth() {
         return imageSize;
     }
 
-    /**
-     * @return the image
-     */
-    public Image getImage() {
-        return image;
+    public Object getImage() {
+        return null;
     }
 
-    private BufferedImage image;
     private int imageSize;
     private int individualTextureSize;
 
-    /**
-     *
-     * @param applet the PApplet
-     * @param imagePath the path to the image
-     * @param atlasRows the number of rows in the atlas (note: The number of
-     * columns must be the same as the number of rows.)
-     * @throws IOException
-     */
     public ImageAtlas(File imagePath, int atlasRows) throws IOException {
-        //atlasRows=32 for a 512x512 image with 16x16 blocks each
-        if (!imagePath.exists()) {
-            throw new IOException("The image \"" + imagePath.getAbsolutePath() + "\" does not exist!");
-        }
-        image = ImageIO.read(imagePath);
-        imageSize = image.getWidth();
-        individualTextureSize = imageSize / atlasRows;//The individual texture size is the size of each atlas block.
+        // ImageAtlas is not used in the core Android rendering path
+        imageSize = 0;
+        individualTextureSize = 0;
     }
     
     public ImageAtlasPosition getImageIndex(int[] pos) {

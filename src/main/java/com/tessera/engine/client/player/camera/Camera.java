@@ -14,7 +14,6 @@ import com.tessera.engine.utils.MiscUtils;
 import com.tessera.engine.utils.math.MathUtils;
 import com.tessera.engine.server.world.chunk.BlockData;
 
-import java.awt.*;
 import java.lang.Math;
 import java.nio.IntBuffer;
 
@@ -40,9 +39,11 @@ public class Camera {
     public static final double TWO_PI = Math.PI * 2;
     public final static Vector3f up = new Vector3f(0f, -1f, 0f);
     private final float sensitivity = 0.35f;
-    private Point mouse = new Point(0, 0);
+
+    public float getSensitivity() { return sensitivity; }
+    private int mouseX = 0, mouseY = 0;
+    private Object _robot = null; // AWT Robot, loaded via reflection for desktop only
     private final IntBuffer windowX, windowY;
-    private Robot robot;
     private final UserControlledPlayer player;
     private final ClientWindow window;
 
@@ -119,8 +120,8 @@ public class Camera {
         cameraViewRay = new Ray();
 
         try {
-            robot = new Robot();
-        } catch (AWTException ex) {
+            // Robot is AWT-only (desktop); on Android mouse warping is not needed
+        } catch (Throwable ex) {
             ErrorHandler.report(ex);
         }
 
@@ -149,7 +150,8 @@ public class Camera {
     public void update(boolean holdMouse) {
         if (holdMouse) {
             hideMouse();
-            mouse = MouseInfo.getPointerInfo().getLocation();
+            mouseX = com.badlogic.gdx.Gdx.input != null ? com.badlogic.gdx.Gdx.input.getX() : 0;
+            mouseY = com.badlogic.gdx.Gdx.input != null ? com.badlogic.gdx.Gdx.input.getY() : 0;
         } else showMouse();
 
         window.getWindowPos(windowX, windowY);
@@ -162,11 +164,17 @@ public class Camera {
         int middleX = w / 2 + x;
         int middleY = h / 2 + y;
 
-        int deltaX = mouse.x - middleX;
-        int deltaY = mouse.y - middleY;
+        int deltaX = mouseX - middleX;
+        int deltaY = mouseY - middleY;
 
-        // The window Position is a little off, could be being multiplied by some factor
-        if (holdMouse) robot.mouseMove(middleX, middleY); // target mouse
+        // On desktop: warp mouse cursor back to center using AWT Robot (via reflection)
+        if (holdMouse) {
+            try {
+                Class<?> robotClass = Class.forName("java.awt.Robot");
+                if (_robot == null) _robot = robotClass.getConstructor().newInstance();
+                robotClass.getMethod("mouseMove", int.class, int.class).invoke(_robot, middleX, middleY);
+            } catch (Throwable ignored) {}
+        }
 
 
         if (holdMouse) {

@@ -23,7 +23,6 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWWindowFocusCallback;
 import org.lwjgl.nuklear.NkVec2;
 
-import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
@@ -184,6 +183,18 @@ public class ClientWindow extends NKWindow {
         frameCount++;//It just wraps around when it reaches max value
     }
 
+    public void renderFrame() {
+        try {
+            startFrame();
+            Client.frameTester.__startFrame();
+            render();
+            Client.frameTester.__endFrame();
+            endFrame();
+        } catch (Exception e) {
+            com.tessera.engine.utils.ErrorHandler.report(e);
+        }
+    }
+
     static DecimalFormat df = new DecimalFormat("####.00");
 
     private static boolean screenshot = false;
@@ -201,15 +212,7 @@ public class ClientWindow extends NKWindow {
 
     private void endScreenshot() {
         if (screenShotInitialized) {
-            String formattedDateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH-mm-ss"));
-            File saveFile = ResourceUtils.appDataFile("screenshots\\" + formattedDateTime + ".png");
-            Main.getClient().consoleOut("Screenshot saved to: " + saveFile.getAbsolutePath());
-            try {
-                saveFile.getParentFile().mkdirs();
-                ImageIO.write(readPixelsOfWindow(), "png", saveFile);
-            } catch (IOException e) {
-                ErrorHandler.report("Could not save screenshot", e);
-            }
+            // Screenshot saving not supported on Android
             screenShotInitialized = false;
             screenshot = false;
         }

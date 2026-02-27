@@ -4,11 +4,10 @@
  */
 package com.tessera.engine.utils;
 
+import com.badlogic.gdx.Gdx;
 import com.tessera.engine.client.ClientWindow;
 import com.tessera.engine.utils.resource.ResourceUtils;
 
-import javax.swing.*;
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -23,26 +22,10 @@ import java.util.Date;
 public class ErrorHandler {
 
     public static void createPopupWindow(String title, String str) {
-        final JFrame parent = new JFrame();
-        JLabel label = new JLabel("");
-        label.setText("<html><body style='padding:5px;'>" + str.replace("\n", "<br>") + "</body></html>");
-//        label.setFont(new Font("Arial", 0, 12));
-        label.setVerticalAlignment(JLabel.TOP);
-        parent.add(label);
-        parent.pack();
-        parent.getContentPane().setBackground(Color.white);
-        parent.setVisible(true);
-        parent.pack();
-
-        parent.setIconImage(popupWindowIcon.getImage());
-        parent.setTitle(title);
-        parent.setLocationRelativeTo(null);
-        parent.setAlwaysOnTop(true);
-        parent.setVisible(true);
-        parent.setSize(380, 240);
+        if (Gdx.app != null) Gdx.app.error("TesseraPopup", title + ": " + str);
+        else System.err.println("POPUP [" + title + "]: " + str);
     }
 
-    private final static ImageIcon popupWindowIcon = new ImageIcon(ResourceUtils.file("logo.png").getAbsolutePath());
     private static final String localDir = new File("").getAbsolutePath();
     private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH_mm_ss");
 

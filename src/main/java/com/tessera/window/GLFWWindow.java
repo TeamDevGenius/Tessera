@@ -1,10 +1,12 @@
 package com.tessera.window;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input.Keys;
 import com.tessera.window.utils.ValueSmoother;
 import org.joml.Vector2d;
 
-import java.awt.image.BufferedImage;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Window abstraction layer backed by LibGDX instead of GLFW.
@@ -15,6 +17,9 @@ public abstract class GLFWWindow {
     /** Used by BlockIconRenderer to synchronize window context creation. */
     public static final Object windowCreateLock = new Object();
 
+    /** Virtual keys pressed by touch controls (key codes are GLFW key values). */
+    public static final Set<Integer> virtualKeys = new HashSet<>();
+
     protected int width, height, display_width, display_height;
     protected Vector2d cursor = new Vector2d();
 
@@ -22,6 +27,12 @@ public abstract class GLFWWindow {
     public static void endGLFW() {}
 
     public void createWindow(String title, int w, int h) {
+        this.width = w; this.height = h;
+        this.display_width = w; this.display_height = h;
+    }
+
+    /** Called when the screen is resized (LibGDX resize callback). */
+    public void resize(int w, int h) {
         this.width = w; this.height = h;
         this.display_width = w; this.display_height = h;
     }
@@ -40,11 +51,55 @@ public abstract class GLFWWindow {
     public void setWindowPos(int x, int y) {}
 
     public boolean isKeyPressed(int key) {
-        return false;
+        // Check virtual touch keys first (Android touch controls)
+        if (virtualKeys.contains(key)) return true;
+        // Map GLFW key code to LibGDX Keys
+        if (Gdx.input == null) return false;
+        int gdxKey = glfwKeyToGdx(key);
+        return gdxKey != -1 && Gdx.input.isKeyPressed(gdxKey);
+    }
+
+    /** Convert GLFW key code to LibGDX Input.Keys code. */
+    private static int glfwKeyToGdx(int glfwKey) {
+        // Printable ASCII keys (A-Z) - GLFW uses uppercase ASCII
+        if (glfwKey >= 65 && glfwKey <= 90) return glfwKey; // A-Z match LibGDX
+        if (glfwKey >= 48 && glfwKey <= 57) return glfwKey; // 0-9 match LibGDX
+        switch (glfwKey) {
+            case 32: return Keys.SPACE;
+            case 256: return Keys.ESCAPE;
+            case 257: return Keys.ENTER;
+            case 258: return Keys.TAB;
+            case 259: return Keys.DEL;
+            case 262: return Keys.RIGHT;
+            case 263: return Keys.LEFT;
+            case 264: return Keys.DOWN;
+            case 265: return Keys.UP;
+            case 290: return Keys.F1;
+            case 291: return Keys.F2;
+            case 292: return Keys.F3;
+            case 293: return Keys.F4;
+            case 294: return Keys.F5;
+            case 295: return Keys.F6;
+            case 296: return Keys.F7;
+            case 297: return Keys.F8;
+            case 298: return Keys.F9;
+            case 299: return Keys.F10;
+            case 300: return Keys.F11;
+            case 301: return Keys.F12;
+            case 340: return Keys.SHIFT_LEFT;
+            case 344: return Keys.SHIFT_RIGHT;
+            case 341: return Keys.CONTROL_LEFT;
+            case 345: return Keys.CONTROL_RIGHT;
+            case 342: return Keys.ALT_LEFT;
+            case 346: return Keys.ALT_RIGHT;
+            default: return -1;
+        }
     }
 
     public boolean isMouseButtonPressed(int button) {
-        return false;
+        if (Gdx.input == null) return false;
+        // GLFW: 0=left, 1=right, 2=middle → LibGDX: Buttons.LEFT=0, RIGHT=1, MIDDLE=2
+        return Gdx.input.isButtonPressed(button);
     }
 
     public void destroyWindow() {
@@ -135,5 +190,5 @@ public abstract class GLFWWindow {
         if (y != null) y.put(0, 0);
     }
 
-    public BufferedImage readPixelsOfWindow() { return null; }
+    public Object readPixelsOfWindow() { return null; }
 }

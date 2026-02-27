@@ -20,9 +20,6 @@ import com.tessera.engine.utils.progress.ProgressData;
 import com.tessera.engine.utils.resource.ResourceUtils;
 import com.tessera.window.developmentTools.FrameTester;
 import com.tessera.window.developmentTools.MemoryGraph;
-
-import javax.swing.*;
-import java.awt.*;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -301,21 +298,7 @@ public class Client {
 
 
     public static void createPopupWindow(String title, String str) {
-        final JFrame parent = new JFrame();
-        JLabel label = new JLabel("");
-        label.setText("<html><body style='padding:5px;'>" + str.replace("\n", "<br>") + "</body></html>");
-        label.setFont(label.getFont().deriveFont(12f));
-        label.setVerticalAlignment(JLabel.TOP);
-        parent.add(label);
-        parent.pack();
-        parent.getContentPane().setBackground(Color.white);
-        parent.setVisible(true);
-        parent.pack();
-        parent.setTitle(title);
-        parent.setLocationRelativeTo(null);
-        parent.setAlwaysOnTop(true);
-        parent.setVisible(true);
-        parent.setSize(350, 200);
+        com.badlogic.gdx.Gdx.app.error("TesseraPopup", title + ": " + str);
     }
 
     public boolean makeNewWorld(String name, int size, Terrain terrain, int seed, GameMode gameMode) {

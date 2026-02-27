@@ -1,17 +1,19 @@
 package com.tessera.engine.client.visuals.skybox;
 
+import com.badlogic.gdx.graphics.Pixmap;
 import com.tessera.engine.client.ClientWindow;
 import com.tessera.engine.server.entity.Entity;
 import com.tessera.engine.server.world.World;
+import com.tessera.engine.utils.resource.ResourceLoader;
 import com.tessera.engine.utils.resource.ResourceUtils;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.opengl.GL30;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
 public class SkyBackground {
 
@@ -22,7 +24,10 @@ public class SkyBackground {
     Vector3f defaultSkyColor = new Vector3f(0.5f, 0.5f, 0.5f);
     SkyBoxMesh skyBoxMesh;
     SkyBoxShader skyBoxShader;
-    BufferedImage skyImage;
+    /** Sky image pixel data stored as ARGB int[], row-major. */
+    private int[] skyPixels;
+    private int skyImageWidth;
+    private int skyImageHeight;
     ClientWindow mainWindow;
     World world;
 
@@ -34,8 +39,71 @@ public class SkyBackground {
 
         File texture = ResourceUtils.file("weather\\skybox.png");
         skyBoxMesh.setTexture(texture);
-        skyImage = ImageIO.read(texture);
+        loadSkyImagePixels(texture);
         skyBoxShader = new SkyBoxShader();
+    }
+
+    private void loadSkyImagePixels(File textureFile) {
+        try {
+            // Prefer classpath resource (works on Android via APK assets)
+            ResourceLoader loader = new ResourceLoader();
+            InputStream is = loader.getResourceAsStream("assets/weather/skybox.png");
+            if (is == null && textureFile.exists()) {
+                is = new java.io.FileInputStream(textureFile);
+            }
+            if (is == null) {
+                skyPixels = null;
+                skyImageWidth = 1;
+                skyImageHeight = 1;
+                return;
+            }
+            byte[] data = readStreamToBytes(is);
+            is.close();
+            Pixmap pixmap = new Pixmap(data, 0, data.length);
+            // Ensure RGBA8888 format for consistent pixel reading
+            Pixmap rgba;
+            if (pixmap.getFormat() == Pixmap.Format.RGBA8888) {
+                rgba = pixmap;
+            } else {
+                rgba = new Pixmap(pixmap.getWidth(), pixmap.getHeight(), Pixmap.Format.RGBA8888);
+                rgba.drawPixmap(pixmap, 0, 0);
+                pixmap.dispose();
+            }
+            skyImageWidth = rgba.getWidth();
+            skyImageHeight = rgba.getHeight();
+            skyPixels = new int[skyImageWidth * skyImageHeight];
+            java.nio.ByteBuffer pb = rgba.getPixels();
+            pb.rewind();
+            for (int i = 0; i < skyPixels.length; i++) {
+                int r = pb.get() & 0xFF;
+                int g = pb.get() & 0xFF;
+                int b = pb.get() & 0xFF;
+                int a = pb.get() & 0xFF;
+                // Store as ARGB
+                skyPixels[i] = (a << 24) | (r << 16) | (g << 8) | b;
+            }
+            rgba.dispose();
+        } catch (Exception e) {
+            // Fall back: no sky image, keep defaults
+            skyPixels = null;
+            skyImageWidth = 1;
+            skyImageHeight = 1;
+        }
+    }
+
+    private static byte[] readStreamToBytes(InputStream is) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buf = new byte[4096];
+        int n;
+        while ((n = is.read(buf)) != -1) baos.write(buf, 0, n);
+        return baos.toByteArray();
+    }
+
+    private int getSkyRGB(int x, int y) {
+        if (skyPixels == null) return 0xFF808080;
+        x = Math.max(0, Math.min(skyImageWidth - 1, x));
+        y = Math.max(0, Math.min(skyImageHeight - 1, y));
+        return skyPixels[y * skyImageWidth + x];
     }
 
     public double getLightness() {
@@ -43,7 +111,8 @@ public class SkyBackground {
     }
 
     private double calculateLightLevel(double x) {
-        lightness = (double) (skyImage.getRGB((int) (skyImage.getWidth() * getSkyTexturePan()), skyImage.getHeight() - 1) & 0xFF) / 255;
+        int rgb = getSkyRGB((int) (skyImageWidth * getSkyTexturePan()), skyImageHeight - 1);
+        lightness = (double) (rgb & 0xFF) / 255;
         if (lightness < 0.18) lightness = 0.18;
         return lightness;
     }
@@ -57,7 +126,7 @@ public class SkyBackground {
         calculateLightLevel(getSkyTexturePan());
 
         //Calculate the sky color
-        int skyColor = skyImage.getRGB((int) (skyImage.getWidth() * getSkyTexturePan()), skyImage.getHeight() - 2);
+        int skyColor = getSkyRGB((int) (skyImageWidth * getSkyTexturePan()), skyImageHeight - 2);
         int red = (skyColor >> 16) & 0xFF;
         int green = (skyColor >> 8) & 0xFF;
         int blue = skyColor & 0xFF;

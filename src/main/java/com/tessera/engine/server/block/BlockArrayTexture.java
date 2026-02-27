@@ -11,13 +11,12 @@ import com.tessera.window.utils.texture.Texture;
 import com.tessera.window.utils.texture.TextureRequest;
 import com.tessera.window.utils.texture.TextureUtils;
 
-import java.awt.image.BufferedImage;
+import com.badlogic.gdx.graphics.Pixmap;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.imageio.ImageIO;
 
 import static com.tessera.engine.client.visuals.gameScene.rendering.chunk.meshers.bufferSet.vertexSet.CompactVertexSet.MAX_BLOCK_ANIMATION_LENGTH;
 
@@ -88,12 +87,13 @@ public class BlockArrayTexture {
         }
 
         //Read the first image and get the texture size
-        BufferedImage img;
         for (String file : allFiles) {
             System.out.println("Testing file: " + file);
             if (fileIsImage(file)) {
-                img = ImageIO.read(resourceLoader.getResourceAsStream(file));
-                textureSize = img.getWidth();
+                byte[] imgBytes = toByteArray(resourceLoader.getResourceAsStream(file));
+                Pixmap pixmap = new Pixmap(imgBytes, 0, imgBytes.length);
+                textureSize = pixmap.getWidth();
+                pixmap.dispose();
                 System.out.println("Texture size: " + textureSize);
                 break;
             }
@@ -131,6 +131,13 @@ public class BlockArrayTexture {
         return TextureUtils.makeTextureArray(textureSize, textureSize, false, filePaths).id;
     }
 
+    private static byte[] toByteArray(java.io.InputStream is) throws IOException {
+        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+        byte[] buf = new byte[4096];
+        int n;
+        while ((n = is.read(buf)) != -1) baos.write(buf, 0, n);
+        return baos.toByteArray();
+    }
 
     private void addAllTexturesFromResourceDir(
             String baseDir, String[] files, List<TextureRequest> imageFiles) throws IOException {
@@ -145,7 +152,8 @@ public class BlockArrayTexture {
                 fileMap.put(textureKey, file);
 
 
-                BufferedImage image = ImageIO.read(resourceLoader.getResourceAsStream(file));
+                byte[] imgBytes = toByteArray(resourceLoader.getResourceAsStream(file));
+                Pixmap image = new Pixmap(imgBytes, 0, imgBytes.length);
                 if (image.getWidth() < image.getHeight()) {//if the image is not square, split it up
                     int lengthMultiplier = image.getHeight() / image.getWidth();
                     for (int j = 0; j < lengthMultiplier; j++) {
@@ -154,12 +162,12 @@ public class BlockArrayTexture {
                     }
                     if (lengthMultiplier > MAX_BLOCK_ANIMATION_LENGTH)
                         lengthMultiplier = MAX_BLOCK_ANIMATION_LENGTH;
-//                        System.out.println("Splitting " + name + " into " + lengthMultiplier + " pieces");
                     animationMap.put(textureKey, lengthMultiplier);
                 } else {
                     imageFiles.add(new TextureRequest(file));
                     index.getAndAdd(1);
                 }
+                image.dispose();
             }
         }
     }
