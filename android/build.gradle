@@ -33,7 +33,7 @@ if (rootProject.hasProperty('includeAndroid') || hasAndroid) {
                 aidl.srcDirs = ['src/main/java']
                 renderscript.srcDirs = ['src/main/java']
                 res.srcDirs = ['res']
-                assets.srcDirs = ['assets', '../src/main/resources']
+                assets.srcDirs = ['assets', '../src/main/resources', '../res']
                 jniLibs.srcDirs = ['libs']
             }
         }

@@ -4,15 +4,16 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.tessera.engine.client.ClientWindow;
 import com.tessera.engine.server.entity.Entity;
 import com.tessera.engine.server.world.World;
+import com.tessera.engine.utils.resource.ResourceLoader;
 import com.tessera.engine.utils.resource.ResourceUtils;
-import com.tessera.window.utils.IOUtil;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.opengl.GL30;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 public class SkyBackground {
 
@@ -43,8 +44,21 @@ public class SkyBackground {
     }
 
     private void loadSkyImagePixels(File textureFile) {
-        try (FileInputStream fis = new FileInputStream(textureFile)) {
-            byte[] data = IOUtil.inputStreamToByteBuffer(fis, 1024).array();
+        try {
+            // Prefer classpath resource (works on Android via APK assets)
+            ResourceLoader loader = new ResourceLoader();
+            InputStream is = loader.getResourceAsStream("assets/weather/skybox.png");
+            if (is == null && textureFile.exists()) {
+                is = new java.io.FileInputStream(textureFile);
+            }
+            if (is == null) {
+                skyPixels = null;
+                skyImageWidth = 1;
+                skyImageHeight = 1;
+                return;
+            }
+            byte[] data = readStreamToBytes(is);
+            is.close();
             Pixmap pixmap = new Pixmap(data, 0, data.length);
             // Ensure RGBA8888 format for consistent pixel reading
             Pixmap rgba;
@@ -75,6 +89,14 @@ public class SkyBackground {
             skyImageWidth = 1;
             skyImageHeight = 1;
         }
+    }
+
+    private static byte[] readStreamToBytes(InputStream is) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buf = new byte[4096];
+        int n;
+        while ((n = is.read(buf)) != -1) baos.write(buf, 0, n);
+        return baos.toByteArray();
     }
 
     private int getSkyRGB(int x, int y) {

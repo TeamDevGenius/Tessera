@@ -43,6 +43,9 @@ public class TesseraApp extends ApplicationAdapter {
     // Camera sensitivity for touch
     private static final float LOOK_SENSITIVITY = 1.5f;
 
+    private static final int ERROR_LOG_INTERVAL_FRAMES = 300;
+    private String initError = null;
+
     @Override
     public void create() {
         Gdx.app.log(TITLE, "Starting version " + VERSION);
@@ -61,16 +64,21 @@ public class TesseraApp extends ApplicationAdapter {
                 // Set initial window size from screen
                 Main.localClient.window.resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
             }
-        } catch (Exception e) {
-            Gdx.app.error(TITLE, "Failed to initialize game", e);
+        } catch (Throwable e) {
+            initError = e.getClass().getSimpleName() + ": " + e.getMessage();
+            Gdx.app.error(TITLE, "Failed to initialize game: " + initError, e);
         }
     }
 
     @Override
     public void render() {
         if (!initialized) {
-            Gdx.gl.glClearColor(0.2f, 0.1f, 0.1f, 1f);
+            Gdx.gl.glClearColor(0.1f, 0.05f, 0.05f, 1f);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+            // Log error periodically so the developer can see it in logcat
+            if (initError != null && Gdx.graphics.getFrameId() % ERROR_LOG_INTERVAL_FRAMES == 0) {
+                Gdx.app.error(TITLE, "Init failed — " + initError);
+            }
             return;
         }
         try {
@@ -83,7 +91,7 @@ public class TesseraApp extends ApplicationAdapter {
             if (isTouchDevice && shapeRenderer != null) {
                 drawTouchControls();
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             Gdx.app.error(TITLE, "Render error", e);
         }
     }

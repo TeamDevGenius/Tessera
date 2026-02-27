@@ -70,21 +70,16 @@ public class ResourceLister {
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.start();
 
-        //The easiest way to test if we are running inside of a jarfile, is if the results of this are empty
-        Pattern pattern = Pattern.compile(compileInitRegex(true, INIT_RESOURCE_DIRECTORIES));
-        List<String> list = ResourceLister._listAllJarfileResources(pattern).stream().toList();
-        System.out.println("List size: " + list.size());
-        boolean isRunningAsJar = list.isEmpty();
+        List<String> list;
+        boolean isRunningAsJar;
 
-        //If we are running as a jar file, try again
-        if (isRunningAsJar) {
-            pattern = Pattern.compile(compileInitRegex(false, INIT_RESOURCE_DIRECTORIES));
-            list = ResourceLister._listAllJarfileResources(pattern).stream().toList();
-        }
+        // On Android (Gdx available + ApplicationType.Android), skip classpath ZIP
+        // scanning entirely — the APK's assets are enumerated via Gdx.files.internal().
+        boolean isAndroid = Gdx.files != null && Gdx.app != null &&
+                Gdx.app.getType() == com.badlogic.gdx.Application.ApplicationType.Android;
 
-        // Android / LibGDX fallback: if classpath scanning found nothing, use Gdx.files.internal
-        if (list.isEmpty() && Gdx.files != null) {
-            System.out.println("ResourceLister: Using Gdx.files.internal() for Android asset listing");
+        if (isAndroid) {
+            System.out.println("ResourceLister: Android detected — using Gdx.files asset listing");
             List<String> gdxList = new ArrayList<>();
             for (String dir : INIT_RESOURCE_DIRECTORIES) {
                 try {
@@ -95,7 +90,34 @@ public class ResourceLister {
                 }
             }
             list = gdxList;
-            isRunningAsJar = true; // treat as jar (paths are already relative)
+            isRunningAsJar = true;
+        } else {
+            // Desktop: use classpath / JAR scanning
+            Pattern pattern = Pattern.compile(compileInitRegex(true, INIT_RESOURCE_DIRECTORIES));
+            list = ResourceLister._listAllJarfileResources(pattern).stream().toList();
+            System.out.println("List size: " + list.size());
+            isRunningAsJar = list.isEmpty();
+
+            if (isRunningAsJar) {
+                pattern = Pattern.compile(compileInitRegex(false, INIT_RESOURCE_DIRECTORIES));
+                list = ResourceLister._listAllJarfileResources(pattern).stream().toList();
+            }
+
+            // Non-Android LibGDX fallback (e.g. HTML5) if classpath scan found nothing
+            if (list.isEmpty() && Gdx.files != null) {
+                System.out.println("ResourceLister: Using Gdx.files.internal() fallback");
+                List<String> gdxList = new ArrayList<>();
+                for (String dir : INIT_RESOURCE_DIRECTORIES) {
+                    try {
+                        FileHandle base = Gdx.files.internal(dir);
+                        if (base.exists()) _listGdxFilesRecursive(base, gdxList, "");
+                    } catch (Exception e) {
+                        System.out.println("ResourceLister Gdx scan failed for " + dir + ": " + e.getMessage());
+                    }
+                }
+                list = gdxList;
+                isRunningAsJar = true;
+            }
         }
 
         //Add all elements from the list to a string array
