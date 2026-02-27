@@ -7,9 +7,7 @@ import com.tessera.engine.client.Client;
 import com.tessera.engine.client.ClientWindow;
 import com.tessera.engine.utils.resource.ResourceUtils;
 
-import java.awt.*;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,12 +41,13 @@ public class VersionInfo {
     }
 
     public void openInBrowser() {
-        //Open the browser with the latest version
         String url = "https://github.com/zipCoder933/tessera/releases";
         try {
-            Desktop.getDesktop().browse(new URL(url).toURI());
-        } catch (IOException e) {
-        } catch (URISyntaxException e) {
+            Class<?> desktopClass = Class.forName("java.awt.Desktop");
+            Object desktop = desktopClass.getMethod("getDesktop").invoke(null);
+            desktopClass.getMethod("browse", java.net.URI.class).invoke(desktop, new URL(url).toURI());
+        } catch (Throwable e) {
+            System.out.println("Cannot open browser: " + e.getMessage());
         }
     }
 

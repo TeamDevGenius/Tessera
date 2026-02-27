@@ -1,6 +1,5 @@
 package com.tessera.engine.utils;
 
-import java.awt.*;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channel;
@@ -12,7 +11,19 @@ import java.util.regex.Pattern;
 
 
 public class FileUtils {
-    public final static boolean canRecycleFiles = Desktop.getDesktop().isSupported(Desktop.Action.MOVE_TO_TRASH);
+    /** Trash/recycle support requires java.awt.Desktop which is unavailable on Android. */
+    public final static boolean canRecycleFiles = isDesktopTrashSupported();
+
+    private static boolean isDesktopTrashSupported() {
+        try {
+            Class<?> desktopClass = Class.forName("java.awt.Desktop");
+            Object desktop = desktopClass.getMethod("getDesktop").invoke(null);
+            Object action = Class.forName("java.awt.Desktop$Action").getField("MOVE_TO_TRASH").get(null);
+            return (Boolean) desktopClass.getMethod("isSupported", action.getClass()).invoke(desktop, action);
+        } catch (Throwable t) {
+            return false;
+        }
+    }
     private static final Pattern FILE_EXTENSION_PATTERN = Pattern.compile(".*\\.[\\w]+$");
 
     public static boolean hasFileExtension(String resourcePath) {
@@ -55,15 +66,29 @@ public class FileUtils {
 
     public static void moveDirectoryToTrash(File directory) throws IOException {
         if (directory.isDirectory() && directory.exists()) {
-            if (Desktop.isDesktopSupported()) {
-                Desktop.getDesktop().moveToTrash(directory);
-                System.out.println("Directory moved to trash: " + directory.getAbsolutePath());
-            } else {
-                System.out.println("Desktop operations are not supported on this system.");
-            }
+            try {
+                Class<?> desktopClass = Class.forName("java.awt.Desktop");
+                if ((Boolean) desktopClass.getMethod("isDesktopSupported").invoke(null)) {
+                    Object desktop = desktopClass.getMethod("getDesktop").invoke(null);
+                    desktopClass.getMethod("moveToTrash", File.class).invoke(desktop, directory);
+                    System.out.println("Directory moved to trash: " + directory.getAbsolutePath());
+                    return;
+                }
+            } catch (Throwable ignored) {}
+            // Fallback: delete recursively
+            deleteRecursively(directory);
+            System.out.println("Directory deleted (trash unavailable): " + directory.getAbsolutePath());
         } else {
             System.out.println("The specified directory does not exist or is not a directory.");
         }
+    }
+
+    private static void deleteRecursively(File f) {
+        if (f.isDirectory()) {
+            File[] children = f.listFiles();
+            if (children != null) for (File c : children) deleteRecursively(c);
+        }
+        f.delete();
     }
 
     public static boolean fileIsInUse(File file) {

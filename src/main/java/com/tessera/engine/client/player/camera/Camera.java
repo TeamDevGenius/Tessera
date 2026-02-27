@@ -14,7 +14,8 @@ import com.tessera.engine.utils.MiscUtils;
 import com.tessera.engine.utils.math.MathUtils;
 import com.tessera.engine.server.world.chunk.BlockData;
 
-import java.awt.*;
+import com.badlogic.gdx.Gdx;
+
 import java.lang.Math;
 import java.nio.IntBuffer;
 
@@ -40,9 +41,9 @@ public class Camera {
     public static final double TWO_PI = Math.PI * 2;
     public final static Vector3f up = new Vector3f(0f, -1f, 0f);
     private final float sensitivity = 0.35f;
-    private Point mouse = new Point(0, 0);
+    private int mouseX, mouseY;
     private final IntBuffer windowX, windowY;
-    private Robot robot;
+    private Object robot; // java.awt.Robot on desktop, null on Android
     private final UserControlledPlayer player;
     private final ClientWindow window;
 
@@ -119,10 +120,9 @@ public class Camera {
         cameraViewRay = new Ray();
 
         try {
-            robot = new Robot();
+            robot = Class.forName("java.awt.Robot").getDeclaredConstructor().newInstance();
         } catch (Throwable ex) {
             // Robot not available on all platforms (e.g., Android)
-            ErrorHandler.log(ex);
         }
 
         target = new Vector3f();
@@ -150,7 +150,18 @@ public class Camera {
     public void update(boolean holdMouse) {
         if (holdMouse) {
             hideMouse();
-            mouse = MouseInfo.getPointerInfo().getLocation();
+            // Get absolute mouse position: try AWT MouseInfo reflectively (desktop),
+            // fall back to LibGDX Gdx.input (Android / any platform)
+            try {
+                Class<?> miClass = Class.forName("java.awt.MouseInfo");
+                Object poi = miClass.getMethod("getPointerInfo").invoke(null);
+                Object location = poi.getClass().getMethod("getLocation").invoke(poi);
+                mouseX = (int) location.getClass().getMethod("getX").invoke(location);
+                mouseY = (int) location.getClass().getMethod("getY").invoke(location);
+            } catch (Throwable e) {
+                mouseX = Gdx.input.getX();
+                mouseY = Gdx.input.getY();
+            }
         } else showMouse();
 
         window.getWindowPos(windowX, windowY);
@@ -163,11 +174,15 @@ public class Camera {
         int middleX = w / 2 + x;
         int middleY = h / 2 + y;
 
-        int deltaX = mouse.x - middleX;
-        int deltaY = mouse.y - middleY;
+        int deltaX = mouseX - middleX;
+        int deltaY = mouseY - middleY;
 
         // The window Position is a little off, could be being multiplied by some factor
-        if (holdMouse && robot != null) robot.mouseMove(middleX, middleY); // target mouse
+        if (holdMouse && robot != null) {
+            try {
+                robot.getClass().getMethod("mouseMove", int.class, int.class).invoke(robot, middleX, middleY);
+            } catch (Throwable ignored) {}
+        }
 
 
         if (holdMouse) {

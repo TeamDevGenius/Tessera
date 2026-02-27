@@ -13,8 +13,7 @@ import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,47 +54,46 @@ public class TextureUtils {
     private static ArrayList<Integer> textures = new ArrayList<>();
 
     public static void saveTextureAsPNG(int textureID, File file) throws IOException {
-        ImageIO.write(getTextureAsBufferedImage(textureID), "png", file);
+        // Use reflection to avoid compile-time dependency on java.awt.image.BufferedImage
+        try {
+            Object image = getTextureAsBufferedImageReflective(textureID);
+            if (image != null) {
+                Class<?> imageIOClass = Class.forName("javax.imageio.ImageIO");
+                Class<?> renderedImageClass = Class.forName("java.awt.image.RenderedImage");
+                imageIOClass.getMethod("write", renderedImageClass, String.class, File.class)
+                        .invoke(null, image, "png", file);
+            }
+        } catch (Throwable e) {
+            throw new IOException("saveTextureAsPNG not supported on this platform", e);
+        }
     }
 
-    /**
-     * from
-     * https://computergraphics.stackexchange.com/questions/4936/lwjgl-opengl-get-bufferedimage-from-texture-id
-     *
-     * @param textureID
-     */
-    public static BufferedImage getTextureAsBufferedImage(int textureID) {
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureID);    // Bind the texture you want to save
-
-        int format = glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT); //We can get all the information about the texture directly from opengl
+    private static Object getTextureAsBufferedImageReflective(int textureID) throws Throwable {
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureID);
+        int format = glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT);
         int width = glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH);
         int height = glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT);
 
-//Using that information we again create a ByteBuffer as well as a BufferedImage. Reading the pixels from the ByteBuffer and placing them on the BufferedImage.
         int channels = 4;
-        if (format == GL_RGB) {
-            channels = 3;
-        }
+        if (format == GL_RGB) channels = 3;
 
         ByteBuffer buffer = BufferUtils.createByteBuffer(width * height * channels);
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-
         glGetTexImage(GL_TEXTURE_2D, 0, format, GL_UNSIGNED_BYTE, buffer);
+
+        Class<?> biClass = Class.forName("java.awt.image.BufferedImage");
+        int TYPE_INT_ARGB = biClass.getField("TYPE_INT_ARGB").getInt(null);
+        Object image = biClass.getDeclaredConstructor(int.class, int.class, int.class)
+                .newInstance(width, height, TYPE_INT_ARGB);
+        java.lang.reflect.Method setRGB = biClass.getMethod("setRGB", int.class, int.class, int.class);
 
         for (int x = 0; x < width; ++x) {
             for (int y = 0; y < height; ++y) {
-//                int i = (x + y * width) * channels;
-                int i = (x + (height - 1 - y) * width) * channels; //Flip the image
-
+                int i = (x + (height - 1 - y) * width) * channels;
                 int r = buffer.get(i) & 0xFF;
                 int g = buffer.get(i + 1) & 0xFF;
                 int b = buffer.get(i + 2) & 0xFF;
-                int a = 255;
-                if (channels == 4) {
-                    a = buffer.get(i + 3) & 0xFF;
-                }
-
-                image.setRGB(x, y, (a << 24) | (r << 16) | (g << 8) | b);
+                int a = channels == 4 ? (buffer.get(i + 3) & 0xFF) : 255;
+                setRGB.invoke(image, x, y, (a << 24) | (r << 16) | (g << 8) | b);
             }
         }
         return image;

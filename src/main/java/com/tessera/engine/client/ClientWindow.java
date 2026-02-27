@@ -201,7 +201,7 @@ public class ClientWindow extends NKWindow {
     private void endScreenshot() {
         if (screenShotInitialized) {
             String formattedDateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH-mm-ss"));
-            File saveFile = ResourceUtils.appDataFile("screenshots\\" + formattedDateTime + ".png");
+            File saveFile = ResourceUtils.appDataFile("screenshots/" + formattedDateTime + ".png");
             if (Main.getClient() != null) Main.getClient().consoleOut("Screenshot saved to: " + saveFile.getAbsolutePath());
             // Screenshot saving is desktop-only; on Android this will silently fail
             try {

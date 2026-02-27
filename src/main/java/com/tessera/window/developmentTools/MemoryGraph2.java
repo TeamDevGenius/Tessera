@@ -1,7 +1,5 @@
 package com.tessera.window.developmentTools;
 
-import javax.swing.*;
-
+/** No-op stub for Android compatibility (javax.swing not available). */
 public class MemoryGraph2 {
-    private JSpinner spinner1;
 }

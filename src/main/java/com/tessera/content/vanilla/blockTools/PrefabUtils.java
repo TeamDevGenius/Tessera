@@ -130,7 +130,7 @@ public class PrefabUtils {
             fd.setDirectory(prefabFolder.getAbsolutePath());
             fd.setFilenameFilter(filter);
             fd.setFile("*.xbprefab");
-            fd.setMode(java.awt.FileDialog.LOAD);
+            fd.setMode(FileDialog.Wrapper.LOAD);
         });
 
         if (outFile != null) {
@@ -159,7 +159,7 @@ public class PrefabUtils {
             fd.setDirectory(prefabFolder.getAbsolutePath());
             fd.setFilenameFilter(filter);
             fd.setFile("*.xbprefab");
-            fd.setMode(java.awt.FileDialog.SAVE);
+            fd.setMode(FileDialog.Wrapper.SAVE);
         }, (file) -> {
             if (file == null) {
                 return;
