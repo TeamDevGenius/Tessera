@@ -53,12 +53,13 @@ public final class IOUtil {
                 }
             }
         } else {
-            try (
-                    InputStream source = resource.startsWith("http")
-                            ? new URL(resource).openStream()
-                            : IOUtil.class.getClassLoader().getResourceAsStream(resource);
-                    ReadableByteChannel rbc = Channels.newChannel(source)
-            ) {
+            InputStream source = resource.startsWith("http")
+                    ? new URL(resource).openStream()
+                    : IOUtil.class.getClassLoader().getResourceAsStream(resource);
+            if (source == null) {
+                throw new java.io.FileNotFoundException("Resource not found on classpath: " + resource);
+            }
+            try (InputStream s = source; ReadableByteChannel rbc = Channels.newChannel(s)) {
                 buffer = createByteBuffer(bufferSize);
 
                 while (true) {
