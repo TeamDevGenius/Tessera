@@ -1,5 +1,6 @@
 package org.lwjgl.opengl;
 
+import com.badlogic.gdx.Gdx;
 import java.nio.*;
 
 /** Stub for LWJGL GL15. */
@@ -26,20 +27,20 @@ public class GL15 extends GL14C {
     public static final int GL_QUERY_RESULT_AVAILABLE = 0x8867;
     public static final int GL_SAMPLES_PASSED       = 0x8914;
 
-    public static int glGenBuffers() { return 0; }
+    public static int glGenBuffers() { return Gdx.gl20 != null ? Gdx.gl20.glGenBuffer() : 0; }
     public static void glGenBuffers(IntBuffer buffers) {}
-    public static void glBindBuffer(int target, int buffer) {}
+    public static void glBindBuffer(int target, int buffer) { if (Gdx.gl20 != null) Gdx.gl20.glBindBuffer(target, buffer); }
     public void glBufferData(int target, long size, int usage) {}
-    public static void glBufferData(int target, ByteBuffer data, int usage) {}
-    public static void glBufferData(int target, FloatBuffer data, int usage) {}
-    public static void glBufferData(int target, IntBuffer data, int usage) {}
-    public static void glBufferData(int target, float[] data, int usage) {}
-    public static void glBufferData(int target, int[] data, int usage) {}
-    public static void glBufferData(int target, short[] data, int usage) {}
-    public static void glBufferSubData(int target, long offset, ByteBuffer data) {}
-    public static void glBufferSubData(int target, long offset, FloatBuffer data) {}
+    public static void glBufferData(int target, ByteBuffer data, int usage) { if (Gdx.gl20 != null) { data.rewind(); Gdx.gl20.glBufferData(target, data.remaining(), data, usage); } }
+    public static void glBufferData(int target, FloatBuffer data, int usage) { if (Gdx.gl20 != null) { data.rewind(); Gdx.gl20.glBufferData(target, data.remaining() * 4, data, usage); } }
+    public static void glBufferData(int target, IntBuffer data, int usage) { if (Gdx.gl20 != null) { data.rewind(); Gdx.gl20.glBufferData(target, data.remaining() * 4, data, usage); } }
+    public static void glBufferData(int target, float[] data, int usage) { if (Gdx.gl20 != null) { java.nio.FloatBuffer fb = java.nio.ByteBuffer.allocateDirect(data.length * 4).order(java.nio.ByteOrder.nativeOrder()).asFloatBuffer(); fb.put(data).flip(); Gdx.gl20.glBufferData(target, data.length * 4, fb, usage); } }
+    public static void glBufferData(int target, int[] data, int usage) { if (Gdx.gl20 != null) { java.nio.IntBuffer ib = java.nio.ByteBuffer.allocateDirect(data.length * 4).order(java.nio.ByteOrder.nativeOrder()).asIntBuffer(); ib.put(data).flip(); Gdx.gl20.glBufferData(target, data.length * 4, ib, usage); } }
+    public static void glBufferData(int target, short[] data, int usage) { if (Gdx.gl20 != null) { java.nio.ShortBuffer sb = java.nio.ByteBuffer.allocateDirect(data.length * 2).order(java.nio.ByteOrder.nativeOrder()).asShortBuffer(); sb.put(data).flip(); java.nio.ByteBuffer bb = java.nio.ByteBuffer.allocateDirect(data.length * 2).order(java.nio.ByteOrder.nativeOrder()); bb.asShortBuffer().put(data); bb.rewind(); Gdx.gl20.glBufferData(target, data.length * 2, bb, usage); } }
+    public static void glBufferSubData(int target, long offset, ByteBuffer data) { if (Gdx.gl20 != null) Gdx.gl20.glBufferSubData(target, (int) offset, data.remaining(), data); }
+    public static void glBufferSubData(int target, long offset, FloatBuffer data) { if (Gdx.gl20 != null) Gdx.gl20.glBufferSubData(target, (int) offset, data.remaining() * 4, data); }
     public static void glBufferSubData(int target, long offset, IntBuffer data) {}
-    public static void glDeleteBuffers(int buffer) {}
+    public static void glDeleteBuffers(int buffer) { if (Gdx.gl20 != null) Gdx.gl20.glDeleteBuffer(buffer); }
     public static void glDeleteBuffers(IntBuffer buffers) {}
     public static ByteBuffer glMapBuffer(int target, int access, long length, ByteBuffer oldBuffer) { return ByteBuffer.allocateDirect((int)length).order(java.nio.ByteOrder.nativeOrder()); }
     public static ByteBuffer glMapBuffer(int target, int access) { return ByteBuffer.allocateDirect(0).order(java.nio.ByteOrder.nativeOrder()); }

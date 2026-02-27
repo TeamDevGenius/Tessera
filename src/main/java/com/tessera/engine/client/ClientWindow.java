@@ -173,7 +173,7 @@ public class ClientWindow extends NKWindow {
 
 
 
-    private void render() throws IOException {
+    void render() throws IOException {
         if (isGameMode) {
             Client.localServer.update();
             gameScene.render();
@@ -182,6 +182,18 @@ public class ClientWindow extends NKWindow {
         }
         popupMessage.draw();
         frameCount++;//It just wraps around when it reaches max value
+    }
+
+    public void renderFrame() {
+        try {
+            startFrame();
+            Client.frameTester.__startFrame();
+            render();
+            Client.frameTester.__endFrame();
+            endFrame();
+        } catch (Exception e) {
+            com.tessera.engine.utils.ErrorHandler.report(e);
+        }
     }
 
     static DecimalFormat df = new DecimalFormat("####.00");

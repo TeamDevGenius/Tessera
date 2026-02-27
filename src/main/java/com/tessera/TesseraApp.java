@@ -2,16 +2,14 @@ package com.tessera;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.tessera.content.vanilla.TesseraGame;
+import com.tessera.engine.SkinRegistry;
+import com.tessera.engine.client.Client;
+import com.tessera.engine.utils.resource.ResourceLister;
 
 /**
  * Main LibGDX ApplicationAdapter for Tessera.
- * Replaces the LWJGL-based ClientWindow and Main entry point.
  * Works on Android (via AndroidLauncher) and Desktop (via DesktopLauncher).
  */
 public class TesseraApp extends ApplicationAdapter {
@@ -19,46 +17,54 @@ public class TesseraApp extends ApplicationAdapter {
     public static final String TITLE = "Tessera";
     public static final String VERSION = "1.8.0";
 
-    private SpriteBatch batch;
-    private BitmapFont font;
-    private Stage uiStage;
+    private boolean initialized = false;
 
     @Override
     public void create() {
-        batch = new SpriteBatch();
-        font = new BitmapFont();
-        uiStage = new Stage(new ScreenViewport());
-
-        InputMultiplexer multiplexer = new InputMultiplexer();
-        multiplexer.addProcessor(uiStage);
-        Gdx.input.setInputProcessor(multiplexer);
-
-        Gdx.app.log(TITLE, "Started version " + VERSION);
+        Gdx.app.log(TITLE, "Starting version " + VERSION);
+        try {
+            ResourceLister.init();
+            Main.skins = new SkinRegistry();
+            Main.game = new TesseraGame();
+            Main.localClient = new Client(new String[0], VERSION, Main.game);
+            initialized = true;
+            Gdx.app.log(TITLE, "Game initialized successfully");
+        } catch (Exception e) {
+            Gdx.app.error(TITLE, "Failed to initialize game", e);
+        }
     }
 
     @Override
     public void render() {
-        Gdx.gl.glClearColor(0.2f, 0.3f, 0.4f, 1f);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-
-        uiStage.act(Gdx.graphics.getDeltaTime());
-        uiStage.draw();
-
-        batch.begin();
-        font.draw(batch, TITLE + " " + VERSION, 10, Gdx.graphics.getHeight() - 10);
-        font.draw(batch, "FPS: " + Gdx.graphics.getFramesPerSecond(), 10, Gdx.graphics.getHeight() - 30);
-        batch.end();
+        if (!initialized) {
+            Gdx.gl.glClearColor(0.2f, 0.1f, 0.1f, 1f);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+            return;
+        }
+        try {
+            Main.getClient().window.renderFrame();
+        } catch (Exception e) {
+            Gdx.app.error(TITLE, "Render error", e);
+        }
     }
 
     @Override
     public void resize(int width, int height) {
-        uiStage.getViewport().update(width, height, true);
+        if (initialized && Main.getClient() != null) {
+            Main.getClient().window.framebufferResizeEvent(width, height);
+        }
     }
 
     @Override
+    public void pause() {}
+
+    @Override
+    public void resume() {}
+
+    @Override
     public void dispose() {
-        batch.dispose();
-        font.dispose();
-        uiStage.dispose();
+        if (initialized && Main.getClient() != null) {
+            Main.getClient().window.destroyWindow();
+        }
     }
 }

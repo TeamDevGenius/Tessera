@@ -39,7 +39,15 @@ public class ResourceUtils {
     }
 
     public static void initialize(boolean gameDevResources, String appDataDir) {
-        APP_DATA_DIR = new File(System.getenv("LOCALAPPDATA"), appDataDir == null ? "tessera" : appDataDir);
+        String appBase;
+        if (System.getenv("LOCALAPPDATA") != null) {
+            appBase = System.getenv("LOCALAPPDATA");
+        } else if (com.badlogic.gdx.Gdx.files != null) {
+            appBase = com.badlogic.gdx.Gdx.files.getLocalStoragePath();
+        } else {
+            appBase = System.getProperty("user.home", ".");
+        }
+        APP_DATA_DIR = new File(appBase, appDataDir == null ? "tessera" : appDataDir);
         APP_DATA_DIR.mkdirs();
         System.out.println("\tApp Data path: " + APP_DATA_DIR);
 

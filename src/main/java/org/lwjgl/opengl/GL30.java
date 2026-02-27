@@ -1,5 +1,6 @@
 package org.lwjgl.opengl;
 
+import com.badlogic.gdx.Gdx;
 import java.nio.*;
 
 /** Stub for LWJGL GL30. */
@@ -30,21 +31,26 @@ public class GL30 extends GL20C {
     public static final int GL_RED                  = 0x1903;
     public static final int GL_VERTEX_ARRAY_BINDING = 0x85B5;
 
-    public static int glGenVertexArrays() { return 0; }
+    public static int glGenVertexArrays() {
+        if (Gdx.gl30 == null) return 0;
+        int[] arr = new int[1];
+        Gdx.gl30.glGenVertexArrays(1, arr, 0);
+        return arr[0];
+    }
     public static void glGenVertexArrays(IntBuffer arrays) {}
-    public static void glBindVertexArray(int array) {}
-    public static void glDeleteVertexArrays(int array) {}
+    public static void glBindVertexArray(int array) { if (Gdx.gl30 != null) Gdx.gl30.glBindVertexArray(array); }
+    public static void glDeleteVertexArrays(int array) { if (Gdx.gl30 != null) Gdx.gl30.glDeleteVertexArrays(1, new int[]{array}, 0); }
     public static void glDeleteVertexArrays(IntBuffer arrays) {}
-    public static int glGenFramebuffers() { return 0; }
-    public static void glBindFramebuffer(int target, int framebuffer) {}
-    public static void glFramebufferTexture2D(int target, int attachment, int textarget, int texture, int level) {}
-    public static void glDeleteFramebuffers(int framebuffer) {}
-    public static int glCheckFramebufferStatus(int target) { return GL_FRAMEBUFFER_COMPLETE; }
-    public static int glGenRenderbuffers() { return 0; }
-    public static void glBindRenderbuffer(int target, int renderbuffer) {}
-    public static void glRenderbufferStorage(int target, int internalformat, int width, int height) {}
-    public static void glFramebufferRenderbuffer(int target, int attachment, int renderbuffertarget, int renderbuffer) {}
-    public static void glDeleteRenderbuffers(int renderbuffer) {}
-    public static void glGenerateMipmap(int target) {}
+    public static int glGenFramebuffers() { return Gdx.gl20 != null ? Gdx.gl20.glGenFramebuffer() : 0; }
+    public static void glBindFramebuffer(int target, int framebuffer) { if (Gdx.gl20 != null) Gdx.gl20.glBindFramebuffer(target, framebuffer); }
+    public static void glFramebufferTexture2D(int target, int attachment, int textarget, int texture, int level) { if (Gdx.gl20 != null) Gdx.gl20.glFramebufferTexture2D(target, attachment, textarget, texture, level); }
+    public static void glDeleteFramebuffers(int framebuffer) { if (Gdx.gl20 != null) Gdx.gl20.glDeleteFramebuffer(framebuffer); }
+    public static int glCheckFramebufferStatus(int target) { return Gdx.gl20 != null ? Gdx.gl20.glCheckFramebufferStatus(target) : GL_FRAMEBUFFER_COMPLETE; }
+    public static int glGenRenderbuffers() { return Gdx.gl20 != null ? Gdx.gl20.glGenRenderbuffer() : 0; }
+    public static void glBindRenderbuffer(int target, int renderbuffer) { if (Gdx.gl20 != null) Gdx.gl20.glBindRenderbuffer(target, renderbuffer); }
+    public static void glRenderbufferStorage(int target, int internalformat, int width, int height) { if (Gdx.gl20 != null) Gdx.gl20.glRenderbufferStorage(target, internalformat, width, height); }
+    public static void glFramebufferRenderbuffer(int target, int attachment, int renderbuffertarget, int renderbuffer) { if (Gdx.gl20 != null) Gdx.gl20.glFramebufferRenderbuffer(target, attachment, renderbuffertarget, renderbuffer); }
+    public static void glDeleteRenderbuffers(int renderbuffer) { if (Gdx.gl20 != null) Gdx.gl20.glDeleteRenderbuffer(renderbuffer); }
+    public static void glGenerateMipmap(int target) { if (Gdx.gl20 != null) Gdx.gl20.glGenerateMipmap(target); }
     public static void glBlitFramebuffer(int srcX0, int srcY0, int srcX1, int srcY1, int dstX0, int dstY0, int dstX1, int dstY1, int mask, int filter) {}
 }

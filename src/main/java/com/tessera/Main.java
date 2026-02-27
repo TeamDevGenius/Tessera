@@ -21,7 +21,7 @@ public class Main {
     public static final String TITLE = "Tessera";
     public static final String VERSION = "1.8.0";
 
-    private static Client localClient;
+    public static Client localClient;
     public static TesseraGame game;
     public static SkinRegistry skins;
     public static Logger LOGGER = Logger.getLogger(Main.class.getName());
