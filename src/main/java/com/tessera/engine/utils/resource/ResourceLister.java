@@ -70,14 +70,14 @@ public class ResourceLister {
 
         //The easiest way to test if we are running inside of a jarfile, is if the results of this are empty
         Pattern pattern = Pattern.compile(compileInitRegex(true, INIT_RESOURCE_DIRECTORIES));
-        List<String> list = ResourceLister._listAllJarfileResources(pattern).stream().toList();
+        List<String> list = new ArrayList<>(ResourceLister._listAllJarfileResources(pattern));
         System.out.println("List size: " + list.size());
         boolean isRunningAsJar = list.isEmpty();
 
         //If we are running as a jar file, try again
         if (isRunningAsJar) {
             pattern = Pattern.compile(compileInitRegex(false, INIT_RESOURCE_DIRECTORIES));
-            list = ResourceLister._listAllJarfileResources(pattern).stream().toList();
+            list = new ArrayList<>(ResourceLister._listAllJarfileResources(pattern));
         }
 
         // Fallback for Android: if the classpath scan is empty, try scanning the APK/JAR directly
@@ -86,7 +86,7 @@ public class ResourceLister {
             try {
                 String jarPath = getPathToJar();
                 pattern = Pattern.compile(compileInitRegex(false, INIT_RESOURCE_DIRECTORIES));
-                list = _listAllJarfileResources(jarPath, pattern).stream().toList();
+                list = new ArrayList<>(_listAllJarfileResources(jarPath, pattern));
                 if (!list.isEmpty()) {
                     isRunningAsJar = true;
                     System.out.println("Fallback APK scan found " + list.size() + " resources");
