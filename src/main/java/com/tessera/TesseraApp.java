@@ -1,6 +1,5 @@
 package com.tessera;
 
-import com.badlogic.gdx.Application;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
@@ -63,10 +62,8 @@ public class TesseraApp extends ApplicationAdapter {
                 // GL initialization must happen on the render thread
                 Gdx.app.postRunnable(() -> {
                     try {
-                        if (Gdx.app.getType() != Application.ApplicationType.Android) {
-                            client = new Client(new String[0], VERSION, game);
-                            Main.localClient = client;
-                        }
+                        client = new Client(new String[0], VERSION, game);
+                        Main.localClient = client;
                         initialized = true;
                         Gdx.app.log(TITLE, "Game engine initialized");
                         buildMainMenuUI();
@@ -165,8 +162,6 @@ public class TesseraApp extends ApplicationAdapter {
                             if (client != null) {
                                 client.loadWorld(w, null);
                                 uiStage.clear();
-                            } else {
-                                Gdx.app.log(TITLE, "World loading is not supported on this platform");
                             }
                         }
                     });
@@ -225,8 +220,6 @@ public class TesseraApp extends ApplicationAdapter {
                                 (int) (Math.random() * MAX_WORLD_SEED),
                                 GameMode.FREEPLAY);
                         if (ok) showLoadWorldUI();
-                    } else {
-                        Gdx.app.log(TITLE, "World creation is not supported on this platform");
                     }
                 }
             }
@@ -312,9 +305,14 @@ public class TesseraApp extends ApplicationAdapter {
                     Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
                 }
             } else {
-                Gdx.gl.glClearColor(0f, 0.3f, 0.6f, 1f);
-                Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-            }
+                    try {
+                        client.window.topMenu.render();
+                    } catch (Exception e) {
+                        Gdx.app.error(TITLE, "Menu render error: " + e.getMessage(), e);
+                        Gdx.gl.glClearColor(0f, 0.3f, 0.6f, 1f);
+                        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+                    }
+                }
         } else {
             Gdx.gl.glClearColor(0.1f, 0.1f, 0.2f, 1f);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);

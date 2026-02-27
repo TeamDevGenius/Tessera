@@ -35,11 +35,15 @@ public class ResourceUtils {
         System.out.println("\tLocal path: " + LOCAL_DIR);
         System.out.println("\tResource path: " + RESOURCE_DIR);
 
-        BLOCK_ICON_DIR = file("items\\blocks\\icons");
+        BLOCK_ICON_DIR = file("items/blocks/icons");
     }
 
     public static void initialize(boolean gameDevResources, String appDataDir) {
-        APP_DATA_DIR = new File(System.getenv("LOCALAPPDATA"), appDataDir == null ? "tessera" : appDataDir);
+        String localAppData = System.getenv("LOCALAPPDATA");
+        String dataDir = appDataDir == null ? "tessera" : appDataDir;
+        APP_DATA_DIR = localAppData != null
+                ? new File(localAppData, dataDir)
+                : new File(System.getProperty("user.home"), "." + dataDir);
         APP_DATA_DIR.mkdirs();
         System.out.println("\tApp Data path: " + APP_DATA_DIR);
 

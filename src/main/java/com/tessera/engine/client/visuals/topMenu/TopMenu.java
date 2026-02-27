@@ -96,7 +96,12 @@ public class TopMenu {
         this.window = client.window;
         this.localClient = client;
 
-        String ipAdress = InetAddress.getLocalHost().getHostAddress();
+        String ipAdress;
+        try {
+            ipAdress = InetAddress.getLocalHost().getHostAddress();
+        } catch (Exception e) {
+            ipAdress = "127.0.0.1";
+        }
 
         menuHome = new MenuHome(window.ctx, client.window, this);
         loadWorld = new LoadWorld(window.ctx, client, this);
