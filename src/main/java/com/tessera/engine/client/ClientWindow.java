@@ -173,7 +173,7 @@ public class ClientWindow extends NKWindow {
 
 
 
-    void render() throws IOException {
+    private void render() throws IOException {
         if (isGameMode) {
             Client.localServer.update();
             gameScene.render();
