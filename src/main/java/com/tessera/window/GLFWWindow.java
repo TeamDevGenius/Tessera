@@ -37,12 +37,26 @@ public abstract class GLFWWindow {
 
     public void setWindowPos(int x, int y) {}
 
+    /** Keys injected by touch/gamepad input – platform-agnostic. */
+    private static final java.util.Set<Integer> touchKeys =
+            java.util.Collections.synchronizedSet(new java.util.HashSet<>());
+
+    public static void setTouchKeyDown(int glfwKey) { touchKeys.add(glfwKey); }
+    public static void setTouchKeyUp(int glfwKey)   { touchKeys.remove(glfwKey); }
+    public static void clearTouchKeys()             { touchKeys.clear(); }
+
     public boolean isKeyPressed(int key) {
-        return false;
+        return touchKeys.contains(key);
     }
 
+    private static final java.util.Set<Integer> touchMouseButtons =
+            java.util.Collections.synchronizedSet(new java.util.HashSet<>());
+
+    public static void setTouchMouseDown(int button) { touchMouseButtons.add(button); }
+    public static void setTouchMouseUp(int button)   { touchMouseButtons.remove(button); }
+
     public boolean isMouseButtonPressed(int button) {
-        return false;
+        return touchMouseButtons.contains(button);
     }
 
     public void destroyWindow() {

@@ -9,9 +9,11 @@ import org.joml.Vector3i;
 import org.joml.Vector4f;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.FloatBuffer;
 
 /**
@@ -62,14 +64,37 @@ public class Shader {
     }
 
     private static String readFile(File file) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        BufferedReader reader = new BufferedReader(new FileReader(file));
-        String line;
-        while ((line = reader.readLine()) != null) {
-            sb.append(line).append("\n");
+        if (file != null && file.exists()) {
+            StringBuilder sb = new StringBuilder();
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line).append("\n");
+            }
+            reader.close();
+            return sb.toString();
         }
-        reader.close();
-        return sb.toString();
+        // Classpath fallback for Android: strip path prefix up to and including /res/
+        if (file != null) {
+            String path = file.getPath().replace("\\", "/");
+            int idx = path.indexOf("/res/");
+            String resourcePath = (idx >= 0) ? path.substring(idx + 5) : path;
+            if (!resourcePath.startsWith("/")) resourcePath = "/" + resourcePath;
+            InputStream is = Shader.class.getResourceAsStream(resourcePath);
+            if (is != null) {
+                return readStream(is);
+            }
+        }
+        throw new IOException("Shader file not found: " + file);
+    }
+
+    private static String readStream(InputStream is) throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        byte[] buf = new byte[4096];
+        int n;
+        while ((n = is.read(buf)) != -1) bos.write(buf, 0, n);
+        is.close();
+        return bos.toString("UTF-8");
     }
 
     public void bindAttributes() {}

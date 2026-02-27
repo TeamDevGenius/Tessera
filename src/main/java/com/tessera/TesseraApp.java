@@ -2,6 +2,7 @@ package com.tessera;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -22,6 +23,8 @@ import com.tessera.engine.client.Client;
 import com.tessera.engine.client.ClientWindow;
 import com.tessera.engine.server.GameMode;
 import com.tessera.engine.utils.resource.ResourceLister;
+import com.tessera.window.GLFWWindow;
+import org.lwjgl.glfw.GLFW;
 
 public class TesseraApp extends ApplicationAdapter {
 
@@ -39,6 +42,101 @@ public class TesseraApp extends ApplicationAdapter {
     private String initError = null;
     private Skin fallbackSkin;
 
+    // ──────────────────────────────────────────────────
+    // Touch controls – two-zone layout:
+    //   Left half  → virtual joystick (WASD movement)
+    //   Right half → camera look (drag)
+    // ──────────────────────────────────────────────────
+    // Track which pointer started in the move zone so touchUp releases correctly
+    private final java.util.Set<Integer> movePointers =
+            java.util.Collections.synchronizedSet(new java.util.HashSet<>());
+    // Centre of the left-stick touch
+    private float stickX, stickY;
+    // Last look-drag positions
+    private float lookLastX, lookLastY;
+    private boolean lookActive = false;
+
+    /** InputAdapter installed when the game world is active. */
+    private final InputAdapter gameInputAdapter = new InputAdapter() {
+
+        @Override
+        public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+            float halfW = Gdx.graphics.getWidth() * 0.5f;
+            if (screenX < halfW) {
+                // Left half: start movement stick
+                stickX = screenX;
+                stickY = screenY;
+                movePointers.add(pointer);
+            } else {
+                // Right half: start look drag
+                lookLastX = screenX;
+                lookLastY = screenY;
+                lookActive = true;
+            }
+            return true;
+        }
+
+        @Override
+        public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+            if (movePointers.remove(pointer)) {
+                // This pointer started in the move zone – release all movement keys
+                GLFWWindow.setTouchKeyUp(GLFW.GLFW_KEY_W);
+                GLFWWindow.setTouchKeyUp(GLFW.GLFW_KEY_S);
+                GLFWWindow.setTouchKeyUp(GLFW.GLFW_KEY_A);
+                GLFWWindow.setTouchKeyUp(GLFW.GLFW_KEY_D);
+            } else {
+                lookActive = false;
+            }
+            return true;
+        }
+
+        @Override
+        public boolean touchDragged(int screenX, int screenY, int pointer) {
+            if (movePointers.contains(pointer)) {
+                // Movement: compute angle and distance from stick origin
+                float dx = screenX - stickX;
+                float dy = screenY - stickY;
+                float dist = (float) Math.sqrt(dx * dx + dy * dy);
+                float deadzone = 20f;
+                if (dist > deadzone) {
+                    float nx = dx / dist;
+                    float ny = dy / dist;
+                    // Forward/backward (positive dy = down = backward on screen)
+                    if (ny < -0.4f) GLFWWindow.setTouchKeyDown(GLFW.GLFW_KEY_W);
+                    else            GLFWWindow.setTouchKeyUp(GLFW.GLFW_KEY_W);
+                    if (ny >  0.4f) GLFWWindow.setTouchKeyDown(GLFW.GLFW_KEY_S);
+                    else            GLFWWindow.setTouchKeyUp(GLFW.GLFW_KEY_S);
+                    // Strafe left/right
+                    if (nx < -0.4f) GLFWWindow.setTouchKeyDown(GLFW.GLFW_KEY_A);
+                    else            GLFWWindow.setTouchKeyUp(GLFW.GLFW_KEY_A);
+                    if (nx >  0.4f) GLFWWindow.setTouchKeyDown(GLFW.GLFW_KEY_D);
+                    else            GLFWWindow.setTouchKeyUp(GLFW.GLFW_KEY_D);
+                } else {
+                    GLFWWindow.setTouchKeyUp(GLFW.GLFW_KEY_W);
+                    GLFWWindow.setTouchKeyUp(GLFW.GLFW_KEY_S);
+                    GLFWWindow.setTouchKeyUp(GLFW.GLFW_KEY_A);
+                    GLFWWindow.setTouchKeyUp(GLFW.GLFW_KEY_D);
+                }
+            } else if (lookActive) {
+                lookLastX = screenX;
+                lookLastY = screenY;
+            }
+            return true;
+        }
+    };
+
+    private void installMenuInput() {
+        InputMultiplexer mux = new InputMultiplexer();
+        mux.addProcessor(uiStage);
+        Gdx.input.setInputProcessor(mux);
+    }
+
+    private void installGameInput() {
+        InputMultiplexer mux = new InputMultiplexer();
+        mux.addProcessor(gameInputAdapter);
+        Gdx.input.setInputProcessor(mux);
+    }
+
     @Override
     public void create() {
         batch = new SpriteBatch();
@@ -47,9 +145,7 @@ public class TesseraApp extends ApplicationAdapter {
 
         InputMultiplexer multiplexer = new InputMultiplexer();
         multiplexer.addProcessor(uiStage);
-        Gdx.input.setInputProcessor(multiplexer);
-
-        Gdx.app.log(TITLE, "Starting " + VERSION);
+        Gdx.input.setInputProcessor(multiplexer);        Gdx.app.log(TITLE, "Starting " + VERSION);
 
         new Thread(() -> {
             try {
@@ -162,6 +258,7 @@ public class TesseraApp extends ApplicationAdapter {
                             if (client != null) {
                                 client.loadWorld(w, null);
                                 uiStage.clear();
+                                installGameInput();
                             }
                         }
                     });
@@ -296,8 +393,17 @@ public class TesseraApp extends ApplicationAdapter {
                         font.draw(batch, "FPS: " + Gdx.graphics.getFramesPerSecond(), 10, Gdx.graphics.getHeight() - 10);
                         batch.end();
                     } else {
-                        Gdx.gl.glClearColor(0f, 0.3f, 0.6f, 1f);
-                        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+                        // Drive Nuklear menu logic (world-loading progress callbacks)
+                        try {
+                            client.window.topMenu.render();
+                        } catch (Exception e) {
+                            Gdx.app.error(TITLE, "Menu render: " + e.getMessage(), e);
+                            Gdx.gl.glClearColor(0f, 0.3f, 0.6f, 1f);
+                            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+                        }
+                        uiStage.act(delta);
+                        uiStage.draw();
+                        return;
                     }
                 } catch (Exception e) {
                     Gdx.app.error(TITLE, "Render error: " + e.getMessage(), e);
@@ -305,14 +411,9 @@ public class TesseraApp extends ApplicationAdapter {
                     Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
                 }
             } else {
-                    try {
-                        client.window.topMenu.render();
-                    } catch (Exception e) {
-                        Gdx.app.error(TITLE, "Menu render error: " + e.getMessage(), e);
-                        Gdx.gl.glClearColor(0f, 0.3f, 0.6f, 1f);
-                        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-                    }
-                }
+                Gdx.gl.glClearColor(0f, 0.3f, 0.6f, 1f);
+                Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+            }
         } else {
             Gdx.gl.glClearColor(0.1f, 0.1f, 0.2f, 1f);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);

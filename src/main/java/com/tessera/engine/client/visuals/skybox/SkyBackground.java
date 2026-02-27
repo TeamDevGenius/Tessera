@@ -4,8 +4,11 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.tessera.engine.client.ClientWindow;
 import com.tessera.engine.server.entity.Entity;
 import com.tessera.engine.server.world.World;
+import com.tessera.engine.utils.resource.ResourceLoader;
 import com.tessera.engine.utils.resource.ResourceUtils;
 import com.tessera.window.utils.IOUtil;
+import com.tessera.window.utils.obj.OBJLoader;
+import com.tessera.window.utils.texture.TextureUtils;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.opengl.GL30;
@@ -13,6 +16,8 @@ import org.lwjgl.opengl.GL30;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
 
 public class SkyBackground {
 
@@ -31,14 +36,34 @@ public class SkyBackground {
         skyBoxMesh = new SkyBoxMesh();
         this.world = world;
         this.mainWindow = mainWindow;
-        skyBoxMesh.loadFromOBJ(ResourceUtils.file("weather\\skybox.obj"));
 
-        File texture = ResourceUtils.file("weather\\skybox.png");
-        skyBoxMesh.setTexture(texture);
-        try (FileInputStream fis = new FileInputStream(texture)) {
-            byte[] bytes = IOUtil.inputStreamToBytes(fis);
-            skyImage = new Pixmap(bytes, 0, bytes.length);
+        ResourceLoader loader = new ResourceLoader();
+
+        // Load skybox OBJ from classpath (fallback to filesystem for desktop)
+        InputStream objStream = loader.getResourceAsStream("weather/skybox.obj");
+        if (objStream == null) {
+            File objFile = ResourceUtils.file("weather/skybox.obj");
+            objStream = new FileInputStream(objFile);
         }
+        skyBoxMesh.loadFromOBJ(OBJLoader.loadModel(objStream));
+
+        // Load skybox texture and Pixmap from classpath
+        byte[] pngBytes = null;
+        InputStream pngStream = loader.getResourceAsStream("weather/skybox.png");
+        if (pngStream != null) {
+            pngBytes = IOUtil.inputStreamToBytes(pngStream);
+        } else {
+            File texFile = ResourceUtils.file("weather/skybox.png");
+            try (FileInputStream fis = new FileInputStream(texFile)) {
+                pngBytes = IOUtil.inputStreamToBytes(fis);
+            }
+        }
+        ByteBuffer buf = ByteBuffer.allocateDirect(pngBytes.length);
+        buf.put(pngBytes).flip();
+        com.tessera.window.utils.texture.Texture tex = TextureUtils.loadTexture(buf, true);
+        skyBoxMesh.setTextureID(tex != null ? tex.id : 0);
+        skyImage = new Pixmap(pngBytes, 0, pngBytes.length);
+
         skyBoxShader = new SkyBoxShader();
     }
 
