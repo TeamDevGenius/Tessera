@@ -14,9 +14,6 @@ import org.joml.Vector4d;
 import org.joml.Vector4f;
 import org.joml.Vector4i;
 
-import java.awt.*;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
 import java.util.Date;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -33,17 +30,19 @@ public class MiscUtils {
 
     public static void setClipboard(String text) {
         try {
-            // Create a StringSelection object with the text to copy
-            StringSelection stringSelection = new StringSelection(text);
-
-            // Get the system clipboard
-            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-
-            // Set the text to the clipboard
-            clipboard.setContents(stringSelection, null);
+            // Try to use AWT clipboard via reflection (works on desktop, not on Android)
+            Class<?> toolkitClass = Class.forName("java.awt.Toolkit");
+            Object toolkit = toolkitClass.getMethod("getDefaultToolkit").invoke(null);
+            Class<?> clipboardClass = Class.forName("java.awt.datatransfer.Clipboard");
+            Object clipboard = toolkitClass.getMethod("getSystemClipboard").invoke(toolkit);
+            Class<?> selClass = Class.forName("java.awt.datatransfer.StringSelection");
+            Object selection = selClass.getConstructor(String.class).newInstance(text);
+            clipboardClass.getMethod("setContents",
+                    Class.forName("java.awt.datatransfer.Transferable"),
+                    Class.forName("java.awt.datatransfer.ClipboardOwner"))
+                    .invoke(clipboard, selection, null);
         } catch (Exception e) {
-            // Handle any exceptions that may occur
-            System.out.println("Error setting clipboard: " + e.getMessage());
+            System.out.println("Clipboard not available: " + e.getMessage());
         }
     }
 

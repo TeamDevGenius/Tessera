@@ -4,6 +4,7 @@ import com.tessera.Main;
 import com.tessera.engine.client.Client;
 import com.tessera.engine.client.ClientWindow;
 import com.tessera.engine.client.player.UserControlledPlayer;
+import com.tessera.engine.client.player.camera.Camera;
 import com.tessera.engine.client.visuals.skybox.SkyBackground;
 import com.tessera.engine.server.Game;
 import com.tessera.engine.server.Registrys;
@@ -118,6 +119,27 @@ public class GameScene implements WindowEvents {
     public void windowResizeEvent(int width, int height) {
         setProjection();
         ui.windowResizeEvent(width, height);
+    }
+
+    /**
+     * Apply a camera pan/tilt delta from touch input (Android).
+     * @param dx horizontal screen delta (pixels)
+     * @param dy vertical screen delta (pixels)
+     */
+    public void applyTouchLookDelta(float dx, float dy) {
+        if (Client.userPlayer != null && Client.userPlayer.camera != null) {
+            int w = window.getWidth();
+            int h = window.getHeight();
+            float sensitivity = Client.userPlayer.camera.getSensitivity();
+            if (Client.userPlayer.camera.getThirdPersonDist() > 0) {
+                Client.userPlayer.camera.pan += (float) (com.tessera.engine.utils.math.MathUtils.map(dx, 0, w, 0, Camera.TWO_PI) * sensitivity);
+            } else {
+                Client.userPlayer.camera.pan -= (float) (com.tessera.engine.utils.math.MathUtils.map(dx, 0, w, 0, Camera.TWO_PI) * sensitivity);
+            }
+            Client.userPlayer.camera.tilt += (float) (com.tessera.engine.utils.math.MathUtils.map(dy, 0, h, 0, Math.PI) * sensitivity);
+            Client.userPlayer.camera.tilt = (float) com.tessera.engine.utils.math.MathUtils.clamp(
+                    Client.userPlayer.camera.tilt, -Math.PI / 2.01, Math.PI / 2.01);
+        }
     }
 
 

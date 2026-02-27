@@ -1,5 +1,6 @@
 package com.tessera.engine.utils.resource;
 
+import com.badlogic.gdx.Gdx;
 import com.tessera.engine.utils.ErrorHandler;
 import com.tessera.engine.utils.FileUtils;
 
@@ -12,12 +13,7 @@ public class ResourceLoader {
     public ResourceLoader() {
     }
 
-    /**
-     * If a path starts with a slash (leading slash) it is an absolute path, otherwise it is a relative path
-     * All paths are separated by a forward slash
-     */
     public static final String FILE_SEPARATOR = "/";
-
 
     protected static String formatPath(String path) {
         path = path.replace("\\", FILE_SEPARATOR);
@@ -27,8 +23,18 @@ public class ResourceLoader {
 
     public InputStream getResourceAsStream(String path) {
         path = formatPath(path);
-        final InputStream in = getContextClassLoader().getResourceAsStream(path);
-        return in == null ? getClass().getResourceAsStream(path) : in;
+        // Try classloader first (works on desktop and when resources are bundled in JAR/APK)
+        InputStream in = getContextClassLoader().getResourceAsStream(path);
+        if (in == null) in = getClass().getResourceAsStream(path);
+        // Fallback: try LibGDX internal file (works on Android when resources are in assets/)
+        if (in == null && Gdx.files != null) {
+            String stripped = path.startsWith("/") ? path.substring(1) : path;
+            try {
+                com.badlogic.gdx.files.FileHandle fh = Gdx.files.internal(stripped);
+                if (fh.exists()) in = fh.read();
+            } catch (Exception ignored) {}
+        }
+        return in;
     }
 
     public URL getResource(String path) {

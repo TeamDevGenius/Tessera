@@ -1,7 +1,4 @@
 package com.tessera.window.developmentTools;
 
-import javax.swing.*;
-
-public class MemoryGraph2 {
-    private JSpinner spinner1;
-}
+/** No-op stub replacing the Swing-based MemoryGraph2 for Android/LibGDX. */
+public class MemoryGraph2 {}

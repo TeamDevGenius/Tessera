@@ -1,5 +1,7 @@
 package com.tessera.engine.utils.resource;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
 import com.tessera.Main;
 import com.tessera.window.utils.preformance.Stopwatch;
 
@@ -74,10 +76,26 @@ public class ResourceLister {
         System.out.println("List size: " + list.size());
         boolean isRunningAsJar = list.isEmpty();
 
-        //If we are runing as a jar file, try again
+        //If we are running as a jar file, try again
         if (isRunningAsJar) {
             pattern = Pattern.compile(compileInitRegex(false, INIT_RESOURCE_DIRECTORIES));
             list = ResourceLister._listAllJarfileResources(pattern).stream().toList();
+        }
+
+        // Android / LibGDX fallback: if classpath scanning found nothing, use Gdx.files.internal
+        if (list.isEmpty() && Gdx.files != null) {
+            System.out.println("ResourceLister: Using Gdx.files.internal() for Android asset listing");
+            List<String> gdxList = new ArrayList<>();
+            for (String dir : INIT_RESOURCE_DIRECTORIES) {
+                try {
+                    FileHandle base = Gdx.files.internal(dir);
+                    if (base.exists()) _listGdxFilesRecursive(base, gdxList, "");
+                } catch (Exception e) {
+                    System.out.println("ResourceLister Gdx scan failed for " + dir + ": " + e.getMessage());
+                }
+            }
+            list = gdxList;
+            isRunningAsJar = true; // treat as jar (paths are already relative)
         }
 
         //Add all elements from the list to a string array
@@ -96,8 +114,18 @@ public class ResourceLister {
         stopwatch.calculateElapsedTime();
         System.out.println(
                 "Resource listing init took " + stopwatch.getElapsedSeconds()
-                        + "s; Running from jar: " + isRunningAsJar);
-//        for (String s : resourceList) System.out.println(s);
+                        + "s; Running from jar: " + isRunningAsJar + "; count: " + resourceList.length);
+    }
+
+    private static void _listGdxFilesRecursive(FileHandle handle, List<String> list, String prefix) {
+        String currentPath = prefix.isEmpty() ? handle.name() : prefix + "/" + handle.name();
+        if (handle.isDirectory()) {
+            for (FileHandle child : handle.list()) {
+                _listGdxFilesRecursive(child, list, currentPath);
+            }
+        } else {
+            list.add(currentPath);
+        }
     }
 
     private static String regexPattern(String path) {

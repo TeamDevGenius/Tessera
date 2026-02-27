@@ -2,7 +2,6 @@ package com.tessera.content.vanilla.blockTools;
 
 import com.tessera.engine.utils.bytes.ByteUtils;
 import com.tessera.engine.utils.ErrorHandler;
-import com.tessera.engine.utils.FileDialog;
 import com.tessera.engine.utils.resource.ResourceUtils;
 import com.tessera.engine.server.world.chunk.BlockData;
 import com.tessera.engine.server.world.chunk.ChunkVoxels;
@@ -122,24 +121,7 @@ public class PrefabUtils {
     }
 
     public static ChunkVoxels loadPrefabFromFileDialog() {
-        File outFile = FileDialog.fileDialog((fd) -> {
-            File prefabFolder = ResourceUtils.appDataFile("prefabs");
-            if (!prefabFolder.exists()) {
-                prefabFolder.mkdirs();
-            }
-            fd.setDirectory(prefabFolder.getAbsolutePath());
-            fd.setFilenameFilter(filter);
-            fd.setFile("*.xbprefab");
-            fd.setMode(java.awt.FileDialog.LOAD);
-        });
-
-        if (outFile != null) {
-            try {
-                return loadPrefabFromFile(outFile);
-            } catch (IOException e) {
-                ErrorHandler.report(e);
-            }
-        }
+        // File dialogs not available on Android
         return new ChunkVoxels(0, 0, 0);
     }
 
@@ -151,26 +133,7 @@ public class PrefabUtils {
     };
 
     public static void savePrefabToFileDialog(ChunkVoxels data) {
-        FileDialog.fileDialog((fd) -> {
-            File prefabFolder = ResourceUtils.appDataFile("prefabs");
-            if (!prefabFolder.exists()) {
-                prefabFolder.mkdirs();
-            }
-            fd.setDirectory(prefabFolder.getAbsolutePath());
-            fd.setFilenameFilter(filter);
-            fd.setFile("*.xbprefab");
-            fd.setMode(java.awt.FileDialog.SAVE);
-        }, (file) -> {
-            if (file == null) {
-                return;
-            }
-            try {
-                PrefabUtils.savePrefabToFile(data, file);
-            } catch (IOException e) {
-                ErrorHandler.report(e);
-            }
-        });
+        // File dialogs not available on Android
     }
-
 
 }

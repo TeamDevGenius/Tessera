@@ -23,7 +23,6 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWWindowFocusCallback;
 import org.lwjgl.nuklear.NkVec2;
 
-import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
@@ -213,15 +212,7 @@ public class ClientWindow extends NKWindow {
 
     private void endScreenshot() {
         if (screenShotInitialized) {
-            String formattedDateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH-mm-ss"));
-            File saveFile = ResourceUtils.appDataFile("screenshots\\" + formattedDateTime + ".png");
-            Main.getClient().consoleOut("Screenshot saved to: " + saveFile.getAbsolutePath());
-            try {
-                saveFile.getParentFile().mkdirs();
-                ImageIO.write(readPixelsOfWindow(), "png", saveFile);
-            } catch (IOException e) {
-                ErrorHandler.report("Could not save screenshot", e);
-            }
+            // Screenshot saving not supported on Android
             screenShotInitialized = false;
             screenshot = false;
         }
