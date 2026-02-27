@@ -53,21 +53,23 @@ public final class IOUtil {
                 }
             }
         } else {
-            try (
-                    InputStream source = resource.startsWith("http")
-                            ? new URL(resource).openStream()
-                            : IOUtil.class.getClassLoader().getResourceAsStream(resource);
-                    ReadableByteChannel rbc = Channels.newChannel(source)
-            ) {
-                buffer = createByteBuffer(bufferSize);
+            try (InputStream source = resource.startsWith("http")
+                    ? new URL(resource).openStream()
+                    : IOUtil.class.getClassLoader().getResourceAsStream(resource)) {
+                if (source == null) {
+                    throw new IOException("Resource not found on classpath: " + resource);
+                }
+                try (ReadableByteChannel rbc = Channels.newChannel(source)) {
+                    buffer = createByteBuffer(bufferSize);
 
-                while (true) {
-                    int bytes = rbc.read(buffer);
-                    if (bytes == -1) {
-                        break;
-                    }
-                    if (buffer.remaining() == 0) {
-                        buffer = resizeBuffer(buffer, buffer.capacity() * 3 / 2); // 50%
+                    while (true) {
+                        int bytes = rbc.read(buffer);
+                        if (bytes == -1) {
+                            break;
+                        }
+                        if (buffer.remaining() == 0) {
+                            buffer = resizeBuffer(buffer, buffer.capacity() * 3 / 2); // 50%
+                        }
                     }
                 }
             }
