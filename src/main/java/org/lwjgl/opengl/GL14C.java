@@ -1,6 +1,8 @@
 package org.lwjgl.opengl;
 
-/** Stub for LWJGL GL14C. */
+import com.badlogic.gdx.Gdx;
+
+/** Stub for LWJGL GL14C. Delegates to LibGDX GL APIs. */
 public class GL14C extends GL13C {
     public static final int GL_BLEND_DST_RGB   = 0x80C8;
     public static final int GL_BLEND_SRC_RGB   = 0x80C9;
@@ -15,6 +17,8 @@ public class GL14C extends GL13C {
     public static final int GL_DEPTH_COMPONENT   = 0x1902;
     public static final int GL_DEPTH_COMPONENT16 = 0x81A5;
 
-    public static void glBlendEquation(int mode) {}
-    public static void glBlendFuncSeparate(int sfactorRGB, int dfactorRGB, int sfactorAlpha, int dfactorAlpha) {}
+    public static void glBlendEquation(int mode) { if (Gdx.gl20 != null) Gdx.gl20.glBlendEquation(mode); }
+    public static void glBlendFuncSeparate(int sfactorRGB, int dfactorRGB, int sfactorAlpha, int dfactorAlpha) {
+        if (Gdx.gl20 != null) Gdx.gl20.glBlendFuncSeparate(sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha);
+    }
 }

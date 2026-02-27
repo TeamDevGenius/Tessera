@@ -20,7 +20,6 @@ import org.lwjgl.nuklear.NkRect;
 import org.lwjgl.nuklear.Nuklear;
 import org.lwjgl.system.MemoryStack;
 
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -109,8 +108,10 @@ public class GameMenu extends UI_GameMenu {
         File helpHtmlPage = ResourceUtils.file("help-menu/help.html");
         if (helpHtmlPage.exists()) {
             try {
-                Desktop.getDesktop().open(helpHtmlPage);
-            } catch (IOException e) {
+                Class<?> desktopClass = Class.forName("java.awt.Desktop");
+                Object desktop = desktopClass.getMethod("getDesktop").invoke(null);
+                desktopClass.getMethod("open", File.class).invoke(desktop, helpHtmlPage);
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
         }

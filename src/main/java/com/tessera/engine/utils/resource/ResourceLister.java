@@ -70,14 +70,30 @@ public class ResourceLister {
 
         //The easiest way to test if we are running inside of a jarfile, is if the results of this are empty
         Pattern pattern = Pattern.compile(compileInitRegex(true, INIT_RESOURCE_DIRECTORIES));
-        List<String> list = ResourceLister._listAllJarfileResources(pattern).stream().toList();
+        List<String> list = new ArrayList<>(ResourceLister._listAllJarfileResources(pattern));
         System.out.println("List size: " + list.size());
         boolean isRunningAsJar = list.isEmpty();
 
-        //If we are runing as a jar file, try again
+        //If we are running as a jar file, try again
         if (isRunningAsJar) {
             pattern = Pattern.compile(compileInitRegex(false, INIT_RESOURCE_DIRECTORIES));
-            list = ResourceLister._listAllJarfileResources(pattern).stream().toList();
+            list = new ArrayList<>(ResourceLister._listAllJarfileResources(pattern));
+        }
+
+        // Fallback for Android: if the classpath scan is empty, try scanning the APK/JAR directly
+        // via the code source location (returns APK path on Android devices)
+        if (list.isEmpty()) {
+            try {
+                String jarPath = getPathToJar();
+                pattern = Pattern.compile(compileInitRegex(false, INIT_RESOURCE_DIRECTORIES));
+                list = new ArrayList<>(_listAllJarfileResources(jarPath, pattern));
+                if (!list.isEmpty()) {
+                    isRunningAsJar = true;
+                    System.out.println("Fallback APK scan found " + list.size() + " resources");
+                }
+            } catch (Exception e) {
+                System.out.println("ResourceLister fallback scan failed: " + e.getMessage());
+            }
         }
 
         //Add all elements from the list to a string array
@@ -223,9 +239,9 @@ public class ResourceLister {
         try {
             zf = new ZipFile(file);
         } catch (final ZipException e) {
-            throw new Error(e);
+            return retval; // not a valid zip/jar — skip silently
         } catch (final IOException e) {
-            throw new Error(e);
+            return retval; // file not accessible — skip silently
         }
         final Enumeration e = zf.entries();
         while (e.hasMoreElements()) {
@@ -239,7 +255,7 @@ public class ResourceLister {
         try {
             zf.close();
         } catch (final IOException e1) {
-            throw new Error(e1);
+            // ignore close failure
         }
         return retval;
     }
@@ -247,6 +263,7 @@ public class ResourceLister {
     private static Collection<String> _getResourcesFromDirectory(final File directory, final Pattern pattern) {
         final ArrayList<String> retval = new ArrayList<String>();
         final File[] fileList = directory.listFiles();
+        if (fileList == null) return retval; // directory is inaccessible or not a real directory
         for (final File file : fileList) {
             if (file.isDirectory()) {
                 retval.addAll(_getResourcesFromDirectory(file, pattern));
@@ -259,7 +276,7 @@ public class ResourceLister {
                         retval.add(fileName);
                     }
                 } catch (final IOException e) {
-                    throw new Error(e);
+                    // skip files we can't read
                 }
             }
         }

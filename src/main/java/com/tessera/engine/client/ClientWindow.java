@@ -23,7 +23,6 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWWindowFocusCallback;
 import org.lwjgl.nuklear.NkVec2;
 
-import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
@@ -202,12 +201,22 @@ public class ClientWindow extends NKWindow {
     private void endScreenshot() {
         if (screenShotInitialized) {
             String formattedDateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH-mm-ss"));
-            File saveFile = ResourceUtils.appDataFile("screenshots\\" + formattedDateTime + ".png");
-            Main.getClient().consoleOut("Screenshot saved to: " + saveFile.getAbsolutePath());
+            File saveFile = ResourceUtils.appDataFile("screenshots/" + formattedDateTime + ".png");
+            if (Main.getClient() != null) Main.getClient().consoleOut("Screenshot saved to: " + saveFile.getAbsolutePath());
+            // Screenshot saving is desktop-only; on Android this will silently fail
             try {
                 saveFile.getParentFile().mkdirs();
-                ImageIO.write(readPixelsOfWindow(), "png", saveFile);
-            } catch (IOException e) {
+                Object img = readPixelsOfWindow();
+                if (img != null) {
+                    // Use reflection to avoid compile-time dependency on javax.imageio
+                    try {
+                        Class<?> imageIO = Class.forName("javax.imageio.ImageIO");
+                        Class<?> renderedImage = Class.forName("java.awt.image.RenderedImage");
+                        imageIO.getMethod("write", renderedImage, String.class, File.class)
+                               .invoke(null, img, "png", saveFile);
+                    } catch (Throwable ignored) { /* not available on Android */ }
+                }
+            } catch (Exception e) {
                 ErrorHandler.report("Could not save screenshot", e);
             }
             screenShotInitialized = false;

@@ -53,12 +53,13 @@ public final class IOUtil {
                 }
             }
         } else {
-            try (
-                    InputStream source = resource.startsWith("http")
-                            ? new URL(resource).openStream()
-                            : IOUtil.class.getClassLoader().getResourceAsStream(resource);
-                    ReadableByteChannel rbc = Channels.newChannel(source)
-            ) {
+            InputStream source = resource.startsWith("http")
+                    ? new URL(resource).openStream()
+                    : IOUtil.class.getClassLoader().getResourceAsStream(resource);
+            if (source == null) {
+                throw new java.io.FileNotFoundException("Resource not found on classpath: " + resource);
+            }
+            try (InputStream s = source; ReadableByteChannel rbc = Channels.newChannel(s)) {
                 buffer = createByteBuffer(bufferSize);
 
                 while (true) {
@@ -102,6 +103,23 @@ public final class IOUtil {
         }
         buffer.flip();
         return memSlice(buffer);
+    }
+
+    /**
+     * Reads an InputStream fully and returns the raw data as a byte array.
+     *
+     * @param source the input stream to read
+     * @return the data as byte array
+     * @throws IOException if an IO error occurs
+     */
+    public static byte[] inputStreamToBytes(InputStream source) throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        byte[] chunk = new byte[4096];
+        int n;
+        while ((n = source.read(chunk)) != -1) {
+            bos.write(chunk, 0, n);
+        }
+        return bos.toByteArray();
     }
 
 }

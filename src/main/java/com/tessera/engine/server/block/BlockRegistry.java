@@ -110,10 +110,13 @@ public class BlockRegistry {
         return highestId;
     }
 
-    public final File blockIconsDirectory = ResourceUtils.file("items\\blocks\\icons");
+    public final File blockIconsDirectory = ResourceUtils.file("items/blocks/icons");
 
     private void generateBlock3DIcons(Block[] blocks) {
-        if (!blockIconsDirectory.exists()) {
+        // Skip icon generation if the parent directory is not writable (e.g. Android)
+        File parent = blockIconsDirectory.getParentFile();
+        boolean canGenerate = parent != null && parent.canWrite();
+        if (!blockIconsDirectory.exists() && canGenerate) {
             System.out.println("========================================\n" +
                     "Generating 3d block icons to disk..." +
                     "\n========================================");

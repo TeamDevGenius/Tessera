@@ -9,9 +9,11 @@ import org.joml.Vector3i;
 import org.joml.Vector4f;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.FloatBuffer;
 
 /**
@@ -34,6 +36,9 @@ public class Shader {
 
     public void init(String vertSrc, String fragSrc) throws IOException {
         ShaderProgram.pedantic = false;
+        // Rewrite shader version for the current platform
+        vertSrc = adaptShaderSource(vertSrc);
+        fragSrc = adaptShaderSource(fragSrc);
         program = new ShaderProgram(vertSrc, fragSrc);
         if (!program.isCompiled()) {
             throw new IOException("Shader compilation failed: " + program.getLog());
@@ -41,19 +46,55 @@ public class Shader {
         bindAttributes();
     }
 
+    /**
+     * Adapts GLSL 4.x shader source for the current platform.
+     * On Android/GLES3, replaces "#version 400 core" with "#version 300 es"
+     * and uncomments precision qualifiers.
+     */
+    private static String adaptShaderSource(String src) {
+        if (src == null) return src;
+        // Replace desktop GLSL version with OpenGL ES 3.0 version
+        src = src.replaceFirst("(?m)^\\s*#version\\s+\\d+\\s*(core|compatibility)?\\s*$",
+                "#version 300 es\nprecision mediump float;\nprecision mediump int;");
+        return src;
+    }
+
     public void init(File vert, File frag) throws IOException {
         init(readFile(vert), readFile(frag));
     }
 
     private static String readFile(File file) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        BufferedReader reader = new BufferedReader(new FileReader(file));
-        String line;
-        while ((line = reader.readLine()) != null) {
-            sb.append(line).append("\n");
+        if (file != null && file.exists()) {
+            StringBuilder sb = new StringBuilder();
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line).append("\n");
+            }
+            reader.close();
+            return sb.toString();
         }
-        reader.close();
-        return sb.toString();
+        // Classpath fallback for Android: strip path prefix up to and including /res/
+        if (file != null) {
+            String path = file.getPath().replace("\\", "/");
+            int idx = path.indexOf("/res/");
+            String resourcePath = (idx >= 0) ? path.substring(idx + 5) : path;
+            if (!resourcePath.startsWith("/")) resourcePath = "/" + resourcePath;
+            InputStream is = Shader.class.getResourceAsStream(resourcePath);
+            if (is != null) {
+                return readStream(is);
+            }
+        }
+        throw new IOException("Shader file not found: " + file);
+    }
+
+    private static String readStream(InputStream is) throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        byte[] buf = new byte[4096];
+        int n;
+        while ((n = is.read(buf)) != -1) bos.write(buf, 0, n);
+        is.close();
+        return bos.toString("UTF-8");
     }
 
     public void bindAttributes() {}

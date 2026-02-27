@@ -51,9 +51,11 @@ public class MiscUtils {
                     ;
             }
         } else {
-            try (
-                    InputStream source = Thread.currentThread().getContextClassLoader().getResourceAsStream(resource);
-                    ReadableByteChannel rbc = Channels.newChannel(source)) {
+            InputStream source = Thread.currentThread().getContextClassLoader().getResourceAsStream(resource);
+            if (source == null) {
+                throw new java.io.FileNotFoundException("Resource not found on classpath: " + resource);
+            }
+            try (InputStream s = source; ReadableByteChannel rbc = Channels.newChannel(s)) {
                 buffer = BufferUtils.createByteBuffer(bufferSize);
 
                 while (true) {

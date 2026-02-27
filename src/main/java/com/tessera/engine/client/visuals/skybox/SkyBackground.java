@@ -1,17 +1,23 @@
 package com.tessera.engine.client.visuals.skybox;
 
+import com.badlogic.gdx.graphics.Pixmap;
 import com.tessera.engine.client.ClientWindow;
 import com.tessera.engine.server.entity.Entity;
 import com.tessera.engine.server.world.World;
+import com.tessera.engine.utils.resource.ResourceLoader;
 import com.tessera.engine.utils.resource.ResourceUtils;
+import com.tessera.window.utils.IOUtil;
+import com.tessera.window.utils.obj.OBJLoader;
+import com.tessera.window.utils.texture.TextureUtils;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.opengl.GL30;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
 
 public class SkyBackground {
 
@@ -22,7 +28,7 @@ public class SkyBackground {
     Vector3f defaultSkyColor = new Vector3f(0.5f, 0.5f, 0.5f);
     SkyBoxMesh skyBoxMesh;
     SkyBoxShader skyBoxShader;
-    BufferedImage skyImage;
+    Pixmap skyImage;
     ClientWindow mainWindow;
     World world;
 
@@ -30,11 +36,34 @@ public class SkyBackground {
         skyBoxMesh = new SkyBoxMesh();
         this.world = world;
         this.mainWindow = mainWindow;
-        skyBoxMesh.loadFromOBJ(ResourceUtils.file("weather\\skybox.obj"));
 
-        File texture = ResourceUtils.file("weather\\skybox.png");
-        skyBoxMesh.setTexture(texture);
-        skyImage = ImageIO.read(texture);
+        ResourceLoader loader = new ResourceLoader();
+
+        // Load skybox OBJ from classpath (fallback to filesystem for desktop)
+        InputStream objStream = loader.getResourceAsStream("weather/skybox.obj");
+        if (objStream == null) {
+            File objFile = ResourceUtils.file("weather/skybox.obj");
+            objStream = new FileInputStream(objFile);
+        }
+        skyBoxMesh.loadFromOBJ(OBJLoader.loadModel(objStream));
+
+        // Load skybox texture and Pixmap from classpath
+        byte[] pngBytes = null;
+        InputStream pngStream = loader.getResourceAsStream("weather/skybox.png");
+        if (pngStream != null) {
+            pngBytes = IOUtil.inputStreamToBytes(pngStream);
+        } else {
+            File texFile = ResourceUtils.file("weather/skybox.png");
+            try (FileInputStream fis = new FileInputStream(texFile)) {
+                pngBytes = IOUtil.inputStreamToBytes(fis);
+            }
+        }
+        ByteBuffer buf = ByteBuffer.allocateDirect(pngBytes.length);
+        buf.put(pngBytes).flip();
+        com.tessera.window.utils.texture.Texture tex = TextureUtils.loadTexture(buf, true);
+        skyBoxMesh.setTextureID(tex != null ? tex.id : 0);
+        skyImage = new Pixmap(pngBytes, 0, pngBytes.length);
+
         skyBoxShader = new SkyBoxShader();
     }
 
@@ -43,7 +72,10 @@ public class SkyBackground {
     }
 
     private double calculateLightLevel(double x) {
-        lightness = (double) (skyImage.getRGB((int) (skyImage.getWidth() * getSkyTexturePan()), skyImage.getHeight() - 1) & 0xFF) / 255;
+        // Pixmap.getPixel returns RGBA8888; extract blue channel (bits 8-15) for lightness
+        // matching the original code which extracted the blue channel from ARGB BufferedImage.getRGB()
+        int pixel = skyImage.getPixel((int) (skyImage.getWidth() * getSkyTexturePan()), skyImage.getHeight() - 1);
+        lightness = ((pixel >> 8) & 0xFF) / 255.0;
         if (lightness < 0.18) lightness = 0.18;
         return lightness;
     }
@@ -56,11 +88,11 @@ public class SkyBackground {
         //Calculate the light level
         calculateLightLevel(getSkyTexturePan());
 
-        //Calculate the sky color
-        int skyColor = skyImage.getRGB((int) (skyImage.getWidth() * getSkyTexturePan()), skyImage.getHeight() - 2);
-        int red = (skyColor >> 16) & 0xFF;
-        int green = (skyColor >> 8) & 0xFF;
-        int blue = skyColor & 0xFF;
+        //Calculate the sky color (Pixmap RGBA8888 → extract R, G, B)
+        int skyColor = skyImage.getPixel((int) (skyImage.getWidth() * getSkyTexturePan()), skyImage.getHeight() - 2);
+        int red   = (skyColor >> 24) & 0xFF;
+        int green = (skyColor >> 16) & 0xFF;
+        int blue  = (skyColor >> 8)  & 0xFF;
         defaultSkyColor.set(red / 255f, green / 255f, blue / 255f);
 
         if (defaultSkyColor.x > defaultSkyColor.z) { //If red is more dominant than blue
