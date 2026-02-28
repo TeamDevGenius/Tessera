@@ -260,7 +260,8 @@ public class ResourceLister {
                         retval.add(fileName);
                     }
                 } catch (final IOException e) {
-                    throw new Error(e);
+                    // skip unreadable files (e.g. on Android) and continue scanning
+                    System.err.println("ResourceLister: skipping unreadable file " + file + ": " + e.getMessage());
                 }
             }
         }
