@@ -4,6 +4,7 @@
  */
 package com.tessera.engine.utils;
 
+import com.badlogic.gdx.Gdx;
 import com.tessera.engine.client.ClientWindow;
 import com.tessera.engine.utils.resource.ResourceUtils;
 
@@ -59,14 +60,25 @@ public class ErrorHandler {
 
     public static void report(String title, String details) {
         if (title == null || title.isBlank()) title = "Error";
-        ClientWindow.popupMessage.message(title, details);
+        if (ClientWindow.popupMessage != null) {
+            ClientWindow.popupMessage.message(title, details);
+        } else {
+            String msg = title + ": " + details;
+            System.err.println(msg);
+            try { Gdx.app.error("Tessera", msg); } catch (Throwable ignored) {}
+        }
     }
 
     public static void report(String userMsg, Throwable ex) {
         String errMessage = (ex.getMessage() != null ? " \n(" + ex.getMessage() + ")" : "");
         if (userMsg == null || userMsg.isBlank()) userMsg = "Runtime Error!";
 
-        ClientWindow.popupMessage.message(userMsg, errMessage + "\n(Content saved to clipboard)");
+        if (ClientWindow.popupMessage != null) {
+            ClientWindow.popupMessage.message(userMsg, errMessage + "\n(Content saved to clipboard)");
+        } else {
+            System.err.println(userMsg + errMessage);
+            try { Gdx.app.error("Tessera", userMsg + errMessage, ex); } catch (Throwable ignored) {}
+        }
         log(ex, userMsg);
     }
 
