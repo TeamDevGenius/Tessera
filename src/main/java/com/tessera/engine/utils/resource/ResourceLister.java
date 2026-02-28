@@ -247,6 +247,7 @@ public class ResourceLister {
     private static Collection<String> _getResourcesFromDirectory(final File directory, final Pattern pattern) {
         final ArrayList<String> retval = new ArrayList<String>();
         final File[] fileList = directory.listFiles();
+        if (fileList == null) return retval;
         for (final File file : fileList) {
             if (file.isDirectory()) {
                 retval.addAll(_getResourcesFromDirectory(file, pattern));
