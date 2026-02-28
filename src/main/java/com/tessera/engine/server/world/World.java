@@ -207,7 +207,7 @@ public class World {
             CHUNK_MESH_THREADS, CHUNK_MESH_THREADS,
             3L, TimeUnit.MILLISECONDS, // It really just came down to tuning these settings for performance
             new LinkedBlockingQueue<Runnable>(), r -> {
-        Client.frameTester.count("Mesh threads", 1);
+        if (Client.frameTester != null) Client.frameTester.count("Mesh threads", 1);
         Thread thread = new Thread(r, "Mesh Thread");
         thread.setDaemon(true);
         thread.setPriority(1);
@@ -226,7 +226,7 @@ public class World {
             PLAYER_CHUNK_MESH_THREADS, PLAYER_CHUNK_MESH_THREADS,
             1L, TimeUnit.MILLISECONDS, // It really just came down to tuning these settings for performance
             new LinkedBlockingQueue<Runnable>(), r -> {
-        Client.frameTester.count("Player Mesh threads", 1);
+        if (Client.frameTester != null) Client.frameTester.count("Player Mesh threads", 1);
         Thread thread = new Thread(r, "Player Mesh Thread");
         thread.setDaemon(true);
         thread.setPriority(10);
@@ -249,6 +249,39 @@ public class World {
         setViewDistance(ClientWindow.settings, ClientWindow.settings.viewDistance.value);
         sortByDistance = new SortByDistanceToPlayer(Client.userPlayer.worldPosition);
         entities.clear();
+    }
+
+    /** GDX/Android path: initialise world without creating a LWJGL ChunkShader. */
+    public void initGdx(BlockArrayTexture textures) {
+        multiplayerPendingBlockChanges = null;
+        multiplayerPendingEntityChanges = null;
+        blockTextureID = textures.getTexture().id;
+        viewDistance.set(VIEW_DIST_MIN * 2);
+        maxChunksForViewDistance = Integer.MAX_VALUE;
+        sortByDistance = new SortByDistanceToPlayer(new Vector3f());
+        entities.clear();
+    }
+
+    public int getBlockTextureID() {
+        return blockTextureID;
+    }
+
+    /** Lightweight chunk update loop for the GDX render path. */
+    public void gdxUpdateChunks(Vector3f playerPosition, int frame) {
+        if (!lastPlayerPosition.equals(playerPosition)) {
+            needsSorting.set(true);
+            lastPlayerPosition.set(playerPosition);
+        }
+        if (frame % 10 == 0) {
+            fillChunksAroundPlayer(playerPosition, true);
+        }
+        chunks.forEach((coords, chunk) -> {
+            chunk.client_distToPlayer = MathUtils.dist(
+                    coords.x * Chunk.WIDTH, coords.y * Chunk.HEIGHT, coords.z * Chunk.WIDTH,
+                    playerPosition.x, playerPosition.y, playerPosition.z);
+            chunk.inFrustum = true; // Always visible in GDX path
+            chunk.prepare(terrain, frame, false);
+        });
     }
 
     // <editor-fold defaultstate="collapsed" desc="Chunk operations">
@@ -606,11 +639,11 @@ public class World {
         chunksToUnload.forEach(chunk -> {
             removeChunk(chunk.position);
         });
-        Client.frameTester.set("all chunks", unusedChunks.size() + chunks.size());
-        Client.frameTester.set("in-use chunks", chunks.size());
-        Client.frameTester.set("chunksToRender", sortedChunksToRender.size());
-        Client.frameTester.set("unused chunks", unusedChunks.size());
-        Client.frameTester.set("world entities", world.entities.size());
+        if (Client.frameTester != null) Client.frameTester.set("all chunks", unusedChunks.size() + chunks.size());
+        if (Client.frameTester != null) Client.frameTester.set("in-use chunks", chunks.size());
+        if (Client.frameTester != null) Client.frameTester.set("chunksToRender", sortedChunksToRender.size());
+        if (Client.frameTester != null) Client.frameTester.set("unused chunks", unusedChunks.size());
+        if (Client.frameTester != null) Client.frameTester.set("world entities", world.entities.size());
     }
 
     final Vector3f chunkShader_cursorMin = new Vector3f();
@@ -624,9 +657,9 @@ public class World {
         }
 
         if (ClientWindow.frameCount % 10 == 0) {
-            Client.frameTester.startProcess();
+            if (Client.frameTester != null) Client.frameTester.startProcess();
             world.fillChunksAroundPlayer(playerPosition, false);
-            Client.frameTester.endProcess("Fill chunks around player");
+            if (Client.frameTester != null) Client.frameTester.endProcess("Fill chunks around player");
         }
 
         /*
@@ -664,7 +697,7 @@ public class World {
         // }
         // }
         // </editor-fold>
-        Client.frameTester.endProcess("Sort chunks if needed");
+        if (Client.frameTester != null) Client.frameTester.endProcess("Sort chunks if needed");
         // </editor-fold>
 
         /*

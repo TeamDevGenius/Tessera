@@ -15,6 +15,11 @@ class UseGM_BooleanBuffer {
     //We change coordinates to support negative indexes for out of bounds voxels
     public final static Vector3i size = new Vector3i(Chunk.WIDTH + 2, Chunk.HEIGHT + 2, Chunk.WIDTH + 2);
 
+    public UseGM_BooleanBuffer() {
+        int count = size.x * size.y * size.z;
+        buffer = new BooleanBuffer(count);
+    }
+
     public UseGM_BooleanBuffer(MemoryStack stack) {
         buffer = new BooleanBuffer(size.x * size.y * size.z, stack);
     }

@@ -7,12 +7,15 @@ import com.tessera.content.vanilla.blocks.RenderType;
 import com.tessera.content.vanilla.blocks.type.*;
 import com.tessera.content.vanilla.terrain.FlatTerrain;
 import com.tessera.content.vanilla.terrain.defaultTerrain.DefaultTerrain;
+import com.tessera.engine.client.Client;
 import com.tessera.engine.server.Registrys;
 import com.tessera.engine.server.block.Block;
 import com.tessera.engine.server.entity.EntitySupplier;
 import com.tessera.engine.server.item.Item;
 import com.tessera.engine.server.loot.AllLootTables;
 import com.tessera.engine.server.recipes.AllRecipes;
+import com.tessera.engine.server.world.World;
+import com.tessera.engine.server.world.data.WorldData;
 import com.tessera.engine.utils.progress.ProgressData;
 import com.tessera.engine.utils.resource.ResourceLister;
 import com.tessera.engine.utils.resource.ResourceUtils;
@@ -37,6 +40,9 @@ public class GdxGameInitializer {
     private static List<Block> pendingBlockList;
     private static List<EntitySupplier> pendingEntityList;
     private static List<Item> pendingItemList;
+
+    /** The world instance used by the GDX/Android render path. */
+    public static World gdxWorld;
 
     /**
      * Phase 1 – runs on a background thread.
@@ -91,6 +97,13 @@ public class GdxGameInitializer {
         // GdxServer/World can resolve terrain by name.
         GdxTerrainRegistry.terrains.add(new DefaultTerrain());
         GdxTerrainRegistry.terrains.add(new FlatTerrain());
+
+        // Create and initialise the GDX world using the existing Client.world instance
+        gdxWorld = Client.world;
+        gdxWorld.data = new WorldData();
+        gdxWorld.terrain = GdxTerrainRegistry.terrains.isEmpty() ? null : GdxTerrainRegistry.terrains.get(0);
+        if (gdxWorld.terrain != null) gdxWorld.terrain.initForWorld(0, null, 0);
+        gdxWorld.initGdx(Registrys.blocks.textures);
 
         // Clean up intermediate lists to allow GC
         pendingBlockList = null;

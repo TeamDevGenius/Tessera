@@ -20,17 +20,22 @@ void main() {
     int i1 = a_vertex.y;
     int i2 = a_vertex.z;
 
-    float x = float((i0 >> 20) & 0xFFF) / maxMult12bits;
-    float y = float((i0 >> 8) & 0xFFF) / maxMult12bits;
+    // Unpack positions: subtract 1.0 because Java packing adds 1 offset
+    float x = float((i0 >> 20) & 0xFFF) / maxMult12bits - 1.0;
+    float y = float((i0 >> 8) & 0xFFF) / maxMult12bits - 1.0;
     int zi12 = (i1 >> 20) & 0xFFF;
-    float z = float(zi12) / maxMult12bits;
+    float z = float(zi12) / maxMult12bits - 1.0;
 
     float u = float((i1 >> 10) & 0x3FF) / maxMult10bits;
     float v = float(i1 & 0x3FF) / maxMult10bits;
 
     int texLayer = (i2 >> 16) & 0xFFFF;
-    float lightRaw = float(i2 & 0xFFFF);
-    v_light = lightRaw / 65535.0;
+
+    // Light is packed as a byte: bits 4-7 = sun (0-15), bits 0-3 = torch (0-15)
+    int lightByte = i2 & 0xFF;
+    float sunLight = float((lightByte >> 4) & 0xF) / 15.0;
+    float torchLight = float(lightByte & 0xF) / 15.0;
+    v_light = max(sunLight, torchLight);
 
     v_UV = vec3(u, v, float(texLayer));
 

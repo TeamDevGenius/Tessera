@@ -8,7 +8,9 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.tessera.TesseraApp;
+import com.tessera.gdx.GdxGameInitializer;
 import com.tessera.gdx.input.TouchControls;
+import com.tessera.gdx.render.WorldRenderer;
 import com.tessera.gdx.ui.GameHUD;
 
 public class GameScreen implements Screen {
@@ -19,6 +21,7 @@ public class GameScreen implements Screen {
     private GameHUD hud;
     private TouchControls touchControls;
     private BitmapFont font;
+    private WorldRenderer worldRenderer;
     public GameScreen(TesseraApp app) {
         this.app = app;
     }
@@ -37,6 +40,10 @@ public class GameScreen implements Screen {
         hud = new GameHUD(hudStage, font);
         touchControls = new TouchControls(camera);
 
+        if (GdxGameInitializer.gdxWorld != null) {
+            worldRenderer = new WorldRenderer(camera, GdxGameInitializer.gdxWorld);
+        }
+
         Gdx.input.setInputProcessor(touchControls);
     }
 
@@ -48,6 +55,8 @@ public class GameScreen implements Screen {
 
         touchControls.update(delta, camera);
         camera.update();
+
+        if (worldRenderer != null) worldRenderer.render(delta);
 
         hud.update(delta, camera);
         hudStage.act(delta);
@@ -74,5 +83,6 @@ public class GameScreen implements Screen {
     public void dispose() {
         if (hudStage != null) { hudStage.dispose(); hudStage = null; }
         if (font != null) { font.dispose(); font = null; }
+        if (worldRenderer != null) { worldRenderer.dispose(); worldRenderer = null; }
     }
 }

@@ -123,9 +123,9 @@ public class Chunk {
         this.client_distToPlayer = distToPlayer;   // Load the chunk
         this.futureChunk = futureChunk;
 
-        Client.frameTester.startProcess();
+        if (Client.frameTester != null) Client.frameTester.startProcess();
         load();
-        Client.frameTester.endProcess("Load chunk");
+        if (Client.frameTester != null) Client.frameTester.endProcess("Load chunk");
     }
 
     public void load() {
@@ -269,36 +269,36 @@ public class Chunk {
             if (getGenerationStatus() >= GEN_SUN_LOADED && !gen_Complete()) {
                 if (neghbors.allNeghborsLoaded) {
                     loadFuture = null;
-                    Client.frameTester.startProcess();
+                    if (Client.frameTester != null) Client.frameTester.startProcess();
                     mesherFuture = meshService.submit(() -> {
 
-                        if (Client.world.data == null) return null; // Quick fix. TODO: remove this line
+                        if (Client.world == null || Client.world.data == null) return null; // Quick fix. TODO: remove this line
 
                         meshes.compute();
                         setGenerationStatus(GEN_COMPLETE);
                         return meshes;
                     });
-                    Client.frameTester.endProcess("red Compute meshes");
+                    if (Client.frameTester != null) Client.frameTester.endProcess("red Compute meshes");
                 } else {
                     /**
                      * The cacheNeighbors is still a bottleneck. I have kind of fixed it
                      * by only calling it every 10th frame
                      */
-                    Client.frameTester.startProcess();
+                    if (Client.frameTester != null) Client.frameTester.startProcess();
                     if (frame % 20 == 0 || isSettingUpWorld) {
                         neghbors.cacheNeighbors();
                     }
-                    Client.frameTester.endProcess("red Cache Neghbors");
+                    if (Client.frameTester != null) Client.frameTester.endProcess("red Cache Neghbors");
                 }
             }
         }
 
         // send mesh to GPU
         if (inFrustum || isSettingUpWorld) {
-            Client.frameTester.startProcess();
+            if (Client.frameTester != null) Client.frameTester.startProcess();
             entities.chunkUpdatedMesh = true;
             sendMeshToGPU();
-            Client.frameTester.endProcess("Send mesh to GPU");
+            if (Client.frameTester != null) Client.frameTester.endProcess("Send mesh to GPU");
         }
     }
 
