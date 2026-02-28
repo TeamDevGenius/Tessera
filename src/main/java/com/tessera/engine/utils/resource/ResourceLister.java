@@ -12,6 +12,7 @@ import java.util.jar.JarFile;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
+import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
 
 import static com.tessera.engine.utils.resource.ResourceLoader.FILE_SEPARATOR;
@@ -70,14 +71,14 @@ public class ResourceLister {
 
         //The easiest way to test if we are running inside of a jarfile, is if the results of this are empty
         Pattern pattern = Pattern.compile(compileInitRegex(true, INIT_RESOURCE_DIRECTORIES));
-        List<String> list = ResourceLister._listAllJarfileResources(pattern).stream().toList();
+        List<String> list = ResourceLister._listAllJarfileResources(pattern).stream().collect(Collectors.toList());
         System.out.println("List size: " + list.size());
         boolean isRunningAsJar = list.isEmpty();
 
-        //If we are runing as a jar file, try again
+        //If we are running as a jar file, try again
         if (isRunningAsJar) {
             pattern = Pattern.compile(compileInitRegex(false, INIT_RESOURCE_DIRECTORIES));
-            list = ResourceLister._listAllJarfileResources(pattern).stream().toList();
+            list = ResourceLister._listAllJarfileResources(pattern).stream().collect(Collectors.toList());
         }
 
         //Add all elements from the list to a string array

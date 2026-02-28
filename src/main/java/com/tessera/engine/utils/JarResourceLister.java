@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -17,7 +18,7 @@ public class JarResourceLister {
         Pattern pattern = Pattern.compile(".*\\Q\\classes" + directory + "\\E(.*)");
 
         final Collection<String> list = getResources(pattern);
-        return list.stream().toList();
+        return list.stream().collect(Collectors.toList());
     }
 
     /**
