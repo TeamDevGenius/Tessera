@@ -183,7 +183,7 @@ public class TextureUtils {
                 }
                 texture.buffer = fullImage;
 
-                glTexSubImage3D(GL_TEXTURE_2D_ARRAY, //stacks another texure on top
+                glTexSubImage3D(GL_TEXTURE_2D_ARRAY, //stacks another texture on top
                         0, 0, 0, i, //image id
                         imageWidth, imageHeight, //image size
                         1, GL_RGBA, GL_UNSIGNED_BYTE, fullImage);
