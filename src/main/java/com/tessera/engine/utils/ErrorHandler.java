@@ -42,7 +42,14 @@ public class ErrorHandler {
         parent.setSize(380, 240);
     }
 
-    private final static ImageIcon popupWindowIcon = new ImageIcon(ResourceUtils.file("logo.png").getAbsolutePath());
+    private static ImageIcon popupWindowIcon;
+    static {
+        try {
+            popupWindowIcon = new ImageIcon(ResourceUtils.file("logo.png").getAbsolutePath());
+        } catch (Throwable ignored) {
+            System.out.println("ErrorHandler: could not load popup icon (Swing/resource unavailable)");
+        }
+    }
     private static final String localDir = new File("").getAbsolutePath();
     private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH_mm_ss");
 

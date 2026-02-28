@@ -9,7 +9,6 @@ import com.tessera.engine.utils.resource.ResourceUtils;
 
 import java.awt.*;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,8 +46,7 @@ public class VersionInfo {
         String url = "https://github.com/zipCoder933/tessera/releases";
         try {
             Desktop.getDesktop().browse(new URL(url).toURI());
-        } catch (IOException e) {
-        } catch (URISyntaxException e) {
+        } catch (Throwable e) {
         }
     }
 

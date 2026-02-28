@@ -41,7 +41,7 @@ public class MiscUtils {
 
             // Set the text to the clipboard
             clipboard.setContents(stringSelection, null);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             // Handle any exceptions that may occur
             System.out.println("Error setting clipboard: " + e.getMessage());
         }

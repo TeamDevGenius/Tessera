@@ -110,7 +110,7 @@ public class GameMenu extends UI_GameMenu {
         if (helpHtmlPage.exists()) {
             try {
                 Desktop.getDesktop().open(helpHtmlPage);
-            } catch (IOException e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
         }
