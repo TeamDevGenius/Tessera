@@ -73,7 +73,7 @@ public class WorldRenderer {
             }
         });
 
-        chunkShader.end();
+        Gdx.gl.glUseProgram(0);
         Gdx.gl.glDisable(GL20.GL_CULL_FACE);
     }
 

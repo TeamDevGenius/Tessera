@@ -84,15 +84,15 @@ public class Chunk_GreedyMesherWithLight extends ChunkMesher<CompactVertexSet> {
         n = 0;
         u = 0;
         v = 0;
-        final IntBuffer quadSize = stack.mallocInt(2);
+        final IntBuffer quadSize = IntBuffer.allocate(2);
         int maskValue, lightMaskValue;
 
         /**
          * These are just working variables to hold two faces during comparison.
          */
-        Vector3i voxelPos = new Vector3i(stack.mallocInt(3));
-        ShortBuffer thisPlaneVoxel = stack.mallocShort(1);
-        ShortBuffer nextPlaneVoxel = stack.mallocShort(1);
+        Vector3i voxelPos = new Vector3i();
+        ShortBuffer thisPlaneVoxel = ShortBuffer.allocate(1);
+        ShortBuffer nextPlaneVoxel = ShortBuffer.allocate(1);
         Block block, block1;
 
         /*

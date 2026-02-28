@@ -2,7 +2,7 @@
 precision highp float;
 precision highp int;
 
-in ivec3 a_vertex;
+layout(location = 0) in ivec3 a_vertex;
 
 uniform mat4 u_MVP;
 uniform float u_fogStart;

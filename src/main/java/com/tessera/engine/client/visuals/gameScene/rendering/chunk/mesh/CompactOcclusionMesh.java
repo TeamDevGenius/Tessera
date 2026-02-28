@@ -38,7 +38,7 @@ public class CompactOcclusionMesh extends CompactMesh {
         this.boundingBox = boundingBox;
         try {
             queryId = GL30.glGenQueries();
-        } catch (UnsatisfiedLinkError | RuntimeException e) {
+        } catch (UnsatisfiedLinkError | NoClassDefFoundError e) {
             // GL30 not available (e.g. on Android without LWJGL); queries disabled
             queryId = -1;
         }
@@ -125,7 +125,7 @@ The basic layout for query occlusion culling is:
         GL30.glColorMask(false, false, false, false);
 //        GL30.glDisable(GL30.GL_DEPTH_TEST);//Disable depth test
         GL30.glDisable(GL30.GL_CULL_FACE);  //Disable backface culling
-        } catch (UnsatisfiedLinkError | RuntimeException ignored) { // GL30 not available on Android
+        } catch (UnsatisfiedLinkError | NoClassDefFoundError ignored) { // GL30 not available on Android
         }
     }
 
@@ -136,7 +136,7 @@ The basic layout for query occlusion culling is:
         GL30.glDepthMask(true);
         GL30.glColorMask(true, true, true, true);
         GameScene.enableBackfaceCulling(); //Enable backface culling
-        } catch (UnsatisfiedLinkError | RuntimeException ignored) { // GL30 not available on Android
+        } catch (UnsatisfiedLinkError | NoClassDefFoundError ignored) { // GL30 not available on Android
         }
     }
 

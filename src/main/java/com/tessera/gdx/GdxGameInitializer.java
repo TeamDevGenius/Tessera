@@ -102,7 +102,11 @@ public class GdxGameInitializer {
         gdxWorld = Client.world;
         gdxWorld.data = new WorldData();
         gdxWorld.terrain = GdxTerrainRegistry.terrains.isEmpty() ? null : GdxTerrainRegistry.terrains.get(0);
-        if (gdxWorld.terrain != null) gdxWorld.terrain.initForWorld(0, null, 0);
+        if (gdxWorld.terrain != null) {
+            com.tessera.engine.utils.option.OptionsList emptyOptions =
+                    new com.tessera.engine.utils.option.OptionsList();
+            gdxWorld.terrain.initForWorld(0, emptyOptions, 0);
+        }
         gdxWorld.initGdx(Registrys.blocks.textures);
 
         // Clean up intermediate lists to allow GC
