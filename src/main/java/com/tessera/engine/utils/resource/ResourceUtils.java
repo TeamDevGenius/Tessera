@@ -39,13 +39,17 @@ public class ResourceUtils {
     }
 
     public static void initialize(boolean gameDevResources, String appDataDir) {
-        APP_DATA_DIR = new File(System.getenv("LOCALAPPDATA"), appDataDir == null ? "tessera" : appDataDir);
+        String localAppData = System.getenv("LOCALAPPDATA");
+        if (localAppData != null) {
+            APP_DATA_DIR = new File(localAppData, appDataDir == null ? "tessera" : appDataDir);
+        } else {
+            // Fallback for Android/Linux
+            APP_DATA_DIR = new File(LOCAL_DIR, appDataDir == null ? "tessera" : appDataDir);
+        }
         APP_DATA_DIR.mkdirs();
         System.out.println("\tApp Data path: " + APP_DATA_DIR);
 
-        //Individual files
         PLAYER_GLOBAL_INFO = new File(APP_DATA_DIR, "player_global_info.dat");
-        //Worlds
         WORLDS_DIR = new File(APP_DATA_DIR, (gameDevResources ? "game_dev" : "game"));
         WORLDS_DIR.mkdirs();
         System.out.println("\tWorlds path: " + WORLDS_DIR);

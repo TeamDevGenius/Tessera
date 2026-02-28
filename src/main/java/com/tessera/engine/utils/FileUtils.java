@@ -12,7 +12,17 @@ import java.util.regex.Pattern;
 
 
 public class FileUtils {
-    public final static boolean canRecycleFiles = Desktop.getDesktop().isSupported(Desktop.Action.MOVE_TO_TRASH);
+    public static final boolean canRecycleFiles;
+    static {
+        boolean supported = false;
+        try {
+            supported = java.awt.Desktop.isDesktopSupported() &&
+                        java.awt.Desktop.getDesktop().isSupported(java.awt.Desktop.Action.MOVE_TO_TRASH);
+        } catch (Throwable ignored) {
+            System.out.println("FileUtils: Desktop.getDesktop() unavailable; canRecycleFiles=false");
+        }
+        canRecycleFiles = supported;
+    }
     private static final Pattern FILE_EXTENSION_PATTERN = Pattern.compile(".*\\.[\\w]+$");
 
     public static boolean hasFileExtension(String resourcePath) {

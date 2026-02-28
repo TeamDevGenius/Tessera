@@ -1,6 +1,7 @@
 package com.tessera.window.render;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
@@ -46,6 +47,18 @@ public class Shader {
     }
 
     private static String readFile(File file) throws IOException {
+        // On Android, Gdx.files is available - read via the AssetManager to avoid
+        // raw filesystem access (APK assets are not accessible as regular files).
+        if (Gdx.files != null) {
+            try {
+                String gdxPath = file.getPath().replace(File.separatorChar, '/');
+                FileHandle handle = Gdx.files.internal(gdxPath);
+                return handle.readString();
+            } catch (com.badlogic.gdx.utils.GdxRuntimeException e) {
+                // File not found as an asset; fall through to filesystem read (desktop path)
+                System.err.println("Shader: GDX asset not found for '" + file + "', trying filesystem: " + e.getMessage());
+            }
+        }
         StringBuilder sb = new StringBuilder();
         BufferedReader reader = new BufferedReader(new FileReader(file));
         String line;

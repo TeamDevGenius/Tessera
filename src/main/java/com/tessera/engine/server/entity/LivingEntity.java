@@ -121,7 +121,7 @@ public abstract class LivingEntity extends Entity {
         this.window = window;
         random = new AnimalRandom();
         this.player = Client.userPlayer;
-        this.pos = new PositionHandler(window, Client.world, aabb, player.aabb);
+        this.pos = new PositionHandler(window, Client.world, aabb, player != null ? player.aabb : null);
         pos.setGravityEnabled(true);
         random.setSeed((int) getUniqueIdentifier());
         health = maxHealth;

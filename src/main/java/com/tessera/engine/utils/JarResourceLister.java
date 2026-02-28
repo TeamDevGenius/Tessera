@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -17,7 +18,7 @@ public class JarResourceLister {
         Pattern pattern = Pattern.compile(".*\\Q\\classes" + directory + "\\E(.*)");
 
         final Collection<String> list = getResources(pattern);
-        return list.stream().toList();
+        return list.stream().collect(Collectors.toList());
     }
 
     /**
@@ -59,9 +60,9 @@ public class JarResourceLister {
         try {
             zf = new ZipFile(file);
         } catch (final ZipException e) {
-            throw new Error(e);
+            return retval;
         } catch (final IOException e) {
-            throw new Error(e);
+            return retval;
         }
         final Enumeration e = zf.entries();
         while (e.hasMoreElements()) {
@@ -75,7 +76,7 @@ public class JarResourceLister {
         try {
             zf.close();
         } catch (final IOException e1) {
-            throw new Error(e1);
+            System.err.println("JarResourceLister: error closing ZipFile " + file + ": " + e1.getMessage());
         }
         return retval;
     }
@@ -85,6 +86,7 @@ public class JarResourceLister {
             final Pattern pattern) {
         final ArrayList<String> retval = new ArrayList<String>();
         final File[] fileList = directory.listFiles();
+        if (fileList == null) return retval;
         for (final File file : fileList) {
             if (file.isDirectory()) {
                 retval.addAll(getResourcesFromDirectory(file, pattern));
@@ -96,7 +98,7 @@ public class JarResourceLister {
                         retval.add(fileName);
                     }
                 } catch (final IOException e) {
-                    throw new Error(e);
+                    System.err.println("JarResourceLister: skipping unreadable file " + file + ": " + e.getMessage());
                 }
             }
         }

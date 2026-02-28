@@ -4,6 +4,8 @@
  */
 package com.tessera.engine.server.block;
 
+import com.badlogic.gdx.Application.ApplicationType;
+import com.badlogic.gdx.Gdx;
 import com.tessera.engine.common.settings.Settings;
 import com.tessera.engine.server.Registrys;
 import com.tessera.engine.server.block.construction.BlockType;
@@ -113,6 +115,10 @@ public class BlockRegistry {
     public final File blockIconsDirectory = ResourceUtils.file("items\\blocks\\icons");
 
     private void generateBlock3DIcons(Block[] blocks) {
+        // BlockIconRenderer requires LWJGL/GLFW and is desktop-only
+        if (Gdx.app != null && Gdx.app.getType() != ApplicationType.Desktop) {
+            return;
+        }
         if (!blockIconsDirectory.exists()) {
             System.out.println("========================================\n" +
                     "Generating 3d block icons to disk..." +

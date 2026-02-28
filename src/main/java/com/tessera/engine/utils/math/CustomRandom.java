@@ -2,9 +2,8 @@ package com.tessera.engine.utils.math;
 
 
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.random.RandomGenerator;
 
-public class CustomRandom implements RandomGenerator {
+public class CustomRandom {
 
     /**
      * The internal state associated with this pseudorandom number generator.
@@ -132,8 +131,7 @@ public class CustomRandom implements RandomGenerator {
      * }}</pre>
      * @since 1.1
      */
-    @Override
-    public void nextBytes(byte[] bytes) {
+        public void nextBytes(byte[] bytes) {
         for (int i = 0, len = bytes.length; i < len; )
             for (int rnd = nextInt(),
                  n = Math.min(len - i, Integer.SIZE / Byte.SIZE);
@@ -157,8 +155,7 @@ public class CustomRandom implements RandomGenerator {
      *   return next(32);
      * }}</pre>
      */
-    @Override
-    public int nextInt() {
+        public int nextInt() {
         return next(32);
     }
 
@@ -217,8 +214,7 @@ public class CustomRandom implements RandomGenerator {
      * successive calls to this method if n is a small power of two.
      * @since 1.2
      */
-    @Override
-    public int nextInt(int bound) {
+        public int nextInt(int bound) {
         if (bound <= 0) return 0;
         int r = next(31);
         int m = bound - 1;
@@ -251,8 +247,7 @@ public class CustomRandom implements RandomGenerator {
      * Because class {@code Random} uses a seed with only 48 bits,
      * this algorithm will not return all possible {@code long} values.
      */
-    @Override
-    public long nextLong() {
+        public long nextLong() {
         // it's okay that the bottom word remains signed.
         return ((long) (next(32)) << 32) + next(32);
     }
@@ -276,8 +271,7 @@ public class CustomRandom implements RandomGenerator {
      * }}</pre>
      * @since 1.2
      */
-    @Override
-    public boolean nextBoolean() {
+        public boolean nextBoolean() {
         return next(1) != 0;
     }
 
@@ -315,8 +309,7 @@ public class CustomRandom implements RandomGenerator {
      * of floating-point numbers: it was slightly more likely that the
      * low-order bit of the significand would be 0 than that it would be 1.]
      */
-    @Override
-    public float nextFloat() {
+        public float nextFloat() {
         return next(24) / ((float) (1 << 24));
     }
 
@@ -355,8 +348,22 @@ public class CustomRandom implements RandomGenerator {
      * for perfection.]
      * @see Math#random
      */
-    @Override
-    public double nextDouble() {
+        public double nextDouble() {
         return (((long) (next(26)) << 27) + next(27)) * DOUBLE_UNIT;
+    }
+
+    public float nextFloat(float bound) {
+        if (bound <= 0) return 0;
+        return nextFloat() * bound;
+    }
+
+    public long nextLong(long bound) {
+        if (bound <= 0) return 0;
+        long bits, val;
+        do {
+            bits = (nextLong() >>> 1);
+            val = bits % bound;
+        } while (bits - val + (bound - 1) < 0);
+        return val;
     }
 }

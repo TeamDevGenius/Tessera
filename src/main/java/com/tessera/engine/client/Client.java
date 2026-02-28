@@ -39,8 +39,8 @@ public class Client {
     public static UserControlledPlayer userPlayer;
     public static Server localServer;
     public final GameCommands commands;
-    public static FrameTester frameTester = new FrameTester("Game frame tester");
-    public static FrameTester dummyTester = new FrameTester("");
+    public static FrameTester frameTester = null;
+    public static FrameTester dummyTester = null;
     static MemoryGraph memoryGraph; //Make this priviate because it is null by default
     public final ClientWindow window;
     private final Game game;
@@ -96,14 +96,20 @@ public class Client {
          * Testers
          */
         if (!Client.DEV_MODE) Client.FPS_TOOLS = false;
-        dummyTester.setEnabled(false);
-        if (Client.FPS_TOOLS) {
-            frameTester.setEnabled(true);
-            frameTester.setStarted(true);
-            frameTester.setUpdateTimeMS(1000);
-            memoryGraph = new MemoryGraph();
-        } else {
-            frameTester.setEnabled(false);
+        try {
+            frameTester = new FrameTester("Game frame tester");
+            dummyTester = new FrameTester("");
+            dummyTester.setEnabled(false);
+            if (Client.FPS_TOOLS) {
+                frameTester.setEnabled(true);
+                frameTester.setStarted(true);
+                frameTester.setUpdateTimeMS(1000);
+                memoryGraph = new MemoryGraph();
+            } else {
+                frameTester.setEnabled(false);
+            }
+        } catch (Throwable ignored) {
+            System.out.println("FrameTester unavailable (Swing not supported on this platform); performance overlay disabled.");
         }
 
         window = new ClientWindow(title, this);
