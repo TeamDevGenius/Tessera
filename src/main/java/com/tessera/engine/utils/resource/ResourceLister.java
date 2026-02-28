@@ -1,6 +1,8 @@
 package com.tessera.engine.utils.resource;
 
 import com.tessera.Main;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
 import com.tessera.window.utils.preformance.Stopwatch;
 
 import java.io.File;
@@ -79,6 +81,13 @@ public class ResourceLister {
         if (isRunningAsJar) {
             pattern = Pattern.compile(compileInitRegex(false, INIT_RESOURCE_DIRECTORIES));
             list = ResourceLister._listAllJarfileResources(pattern).stream().collect(Collectors.toList());
+        }
+
+        // Fallback for Android: classpath zip-scanning yields nothing, so use Gdx.files
+        if (list.isEmpty() && Gdx.files != null) {
+            for (String dir : INIT_RESOURCE_DIRECTORIES) {
+                collectGdxFiles(dir, list);
+            }
         }
 
         //Add all elements from the list to a string array
@@ -161,7 +170,27 @@ public class ResourceLister {
     }
 
     /**
-     * for all elements of java.class.path get a Collection of resources Pattern
+     * Recursively collects resource paths under {@code dirPath} using
+     * {@link Gdx#files} (Android AssetManager on Android, filesystem on desktop).
+     * Paths are added with a leading {@code /} via {@link ResourceLoader#formatPath}.
+     */
+    private static void collectGdxFiles(String dirPath, List<String> list) {
+        try {
+            FileHandle[] children = Gdx.files.internal(dirPath).list();
+            for (FileHandle child : children) {
+                String childPath = dirPath + FILE_SEPARATOR + child.name();
+                if (child.isDirectory()) {
+                    collectGdxFiles(childPath, list);
+                } else {
+                    list.add(ResourceLoader.formatPath(childPath));
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("ResourceLister: GDX fallback failed for '" + dirPath + "': " + e.getMessage());
+        }
+    }
+
+    /**
      * pattern = Pattern.compile(".*"); gets all resources
      *
      * @param pattern the pattern to match
