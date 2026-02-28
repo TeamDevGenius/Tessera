@@ -14,6 +14,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.Window;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
@@ -68,6 +69,15 @@ public class MainMenuScreen implements Screen {
 
         Label.LabelStyle lblStyle = new Label.LabelStyle(font, Color.WHITE);
         skin.add("default", lblStyle);
+
+        // Window style required by Dialog (which extends Window)
+        Pixmap winBgPm = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+        winBgPm.setColor(0.1f, 0.1f, 0.25f, 0.97f);
+        winBgPm.fill();
+        Texture winBgTex = new Texture(winBgPm);
+        winBgPm.dispose();
+        Window.WindowStyle windowStyle = new Window.WindowStyle(font, Color.WHITE, new TextureRegionDrawable(winBgTex));
+        skin.add("default", windowStyle);
 
         Table root = new Table();
         root.setFillParent(true);
