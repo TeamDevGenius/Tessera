@@ -87,14 +87,14 @@ public class LoadingScreen implements Screen {
                         GdxGameInitializer.initGLResources(null);
                         statusMessage = "Done!";
                         loadComplete = true;
-                    } catch (Exception e) {
-                        statusMessage = "Error: " + e.getMessage();
-                        com.badlogic.gdx.Gdx.app.error("LoadingScreen", "GL init failed", e);
+                    } catch (Throwable t) {
+                        statusMessage = "Error: " + t.getMessage();
+                        com.badlogic.gdx.Gdx.app.error("LoadingScreen", "GL init failed", t);
                     }
                 });
-            } catch (Exception e) {
-                statusMessage = "Error: " + e.getMessage();
-                com.badlogic.gdx.Gdx.app.error("LoadingScreen", "Logic init failed", e);
+            } catch (Throwable t) {
+                statusMessage = "Error: " + t.getMessage();
+                com.badlogic.gdx.Gdx.app.error("LoadingScreen", "Logic init failed", t);
             }
         }, "WorldLoader").start();
     }

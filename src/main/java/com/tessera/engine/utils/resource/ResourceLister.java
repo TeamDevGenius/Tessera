@@ -239,7 +239,7 @@ public class ResourceLister {
         try {
             zf.close();
         } catch (final IOException e1) {
-            throw new Error(e1);
+            System.err.println("ResourceLister: error closing ZipFile " + file + ": " + e1.getMessage());
         }
         return retval;
     }
