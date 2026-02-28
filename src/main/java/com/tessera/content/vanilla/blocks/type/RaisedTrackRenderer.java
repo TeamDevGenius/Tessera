@@ -29,10 +29,10 @@ public class RaisedTrackRenderer extends BlockType {
     public RaisedTrackRenderer() throws IOException {
         // ObjToBlockModel.parseFileWithYRotations(false, 1.6f, ResourceUtils.resource("block types\\raisedTrack\\raisedTrack.obj"));
         generate3DIcon = false;
-        floor0 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/raisedTrack\\raisedTrack0.blockType"), renderSide_subBlock);
-        floor1 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/raisedTrack\\raisedTrack1.blockType"), renderSide_subBlock);
-        floor2 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/raisedTrack\\raisedTrack2.blockType"), renderSide_subBlock);
-        floor3 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/raisedTrack\\raisedTrack3.blockType"), renderSide_subBlock);
+        floor0 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/raisedTrack/raisedTrack0.blockType"), renderSide_subBlock);
+        floor1 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/raisedTrack/raisedTrack1.blockType"), renderSide_subBlock);
+        floor2 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/raisedTrack/raisedTrack2.blockType"), renderSide_subBlock);
+        floor3 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/raisedTrack/raisedTrack3.blockType"), renderSide_subBlock);
         initializationCallback = (b) -> {
 
             b.initialBlockData = (existingData, player) -> {

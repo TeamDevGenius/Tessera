@@ -18,11 +18,11 @@ public class Horse extends QuadPedalLandAnimal {
     public QuadPedalLandAnimal_StaticData getStaticData() throws IOException {
         if (staticData == null) {
             staticData = new QuadPedalLandAnimal_StaticData(
-                    "/assets/tessera/entities/animal\\horse\\horse\\body.obj",
+                    "/assets/tessera/entities/animal/horse/horse/body.obj",
                     null,
-                    "/assets/tessera/entities/animal\\horse\\horse\\leg.obj",
-                    "/assets/tessera/entities/animal\\horse\\horse\\saddle.obj",
-                    "/assets/tessera/entities/animal\\horse\\horse\\textures");
+                    "/assets/tessera/entities/animal/horse/horse/leg.obj",
+                    "/assets/tessera/entities/animal/horse/horse/saddle.obj",
+                    "/assets/tessera/entities/animal/horse/horse/textures");
         }
         return staticData;
     }

@@ -170,7 +170,7 @@ public class Item implements Comparable<Item> {
 
         if (iconFilename != null) { //If we have a custom icon
             try {
-                Texture icon = TextureUtils.loadTextureFromResource("/assets/tessera/textures/item/" + iconFilename, false);
+                Texture icon = TextureUtils.loadTextureFromResourceGdx("/assets/tessera/textures/item/" + iconFilename, false);
                 if (icon != null) {
                     setIcon(icon.id);
                 } else {
@@ -184,21 +184,29 @@ public class Item implements Comparable<Item> {
             File blockIcon = new File(blockIconDirectory, getBlock().id + ".png");
 //            System.out.println("Block icon file: " + blockIcon.getAbsolutePath());
             if (blockIcon.exists()) {
-                Texture icon = TextureUtils.loadTextureFromFile(blockIcon, true);
-                if (icon != null) {
-                    setIcon(icon.id);
-                } else {
-                    System.err.println("Item.init: missing block icon file for item: " + id);
+                try {
+                    Texture icon = TextureUtils.loadTextureFromFile(blockIcon, true);
+                    if (icon != null) {
+                        setIcon(icon.id);
+                    } else {
+                        System.err.println("Item.init: missing block icon file for item: " + id);
+                        setIcon(defaultIcon);
+                    }
+                } catch (Exception e) {
                     setIcon(defaultIcon);
                 }
             } else {//If there is no generated block icon, default to the texture
                 String file = textures.getTextureFile(getBlock().texture.NEG_Y_NAME);
                 if (file != null) {
-                    Texture tex = TextureUtils.loadTextureFromResource(file, false);
-                    if (tex != null) {
-                        setIcon(tex.id);
-                    } else {
-                        System.err.println("Item.init: missing block texture '" + file + "' for item: " + id);
+                    try {
+                        Texture tex = TextureUtils.loadTextureFromResourceGdx(file, false);
+                        if (tex != null) {
+                            setIcon(tex.id);
+                        } else {
+                            System.err.println("Item.init: missing block texture '" + file + "' for item: " + id);
+                            setIcon(defaultIcon);
+                        }
+                    } catch (Exception e) {
                         setIcon(defaultIcon);
                     }
                 } else {

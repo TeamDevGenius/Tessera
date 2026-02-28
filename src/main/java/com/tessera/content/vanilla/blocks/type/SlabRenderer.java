@@ -41,12 +41,12 @@ public class SlabRenderer extends BlockType {
             }
         };
 
-        ceiling = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/slab\\ceilingSlab.blockType"), renderSide);
-        floor = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/slab\\floorSlab.blockType"), renderSide);
-        side0 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/slab\\sideSlab0.blockType"), renderSide);
-        side1 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/slab\\sideSlab1.blockType"), renderSide);
-        side2 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/slab\\sideSlab2.blockType"), renderSide);
-        side3 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/slab\\sideSlab3.blockType"), renderSide);
+        ceiling = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/slab/ceilingSlab.blockType"), renderSide);
+        floor = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/slab/floorSlab.blockType"), renderSide);
+        side0 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/slab/sideSlab0.blockType"), renderSide);
+        side1 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/slab/sideSlab1.blockType"), renderSide);
+        side2 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/slab/sideSlab2.blockType"), renderSide);
+        side3 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/slab/sideSlab3.blockType"), renderSide);
         initializationCallback = (b) -> {
 
             b.initialBlockData = (existingData, player) -> {

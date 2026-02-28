@@ -97,14 +97,14 @@ public class LampRenderer extends BlockType {
         // ObjToBlockModel.parseFileWithYRotations(false, 1.6f,
         //         ResourceUtils.resource("block types\\lamp\\side block.obj"));
 
-        lamp = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/lamp\\lamp.blockType"),
+        lamp = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/lamp/lamp.blockType"),
                 (t, n) -> shouldRenderFace_subBlock(t, n));
         fenceSide = new BlockModel[4];
         sideBlock = new BlockModel[4];
         for (int i = 0; i < 4; i++) {
-            fenceSide[i] = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/lamp\\side" + i + ".blockType"),
+            fenceSide[i] = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/lamp/side" + i + ".blockType"),
                     (t, n) -> shouldRenderFace_subBlock(t, n));
-            sideBlock[i] = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/lamp\\side block" + i + ".blockType"),
+            sideBlock[i] = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/lamp/side block" + i + ".blockType"),
                     (t, n) -> shouldRenderFace_subBlock(t, n));
         }
         initializationCallback = (b) -> {

@@ -18,7 +18,6 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
 
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
@@ -48,8 +47,8 @@ public class Chunk_GreedyMesherWithLight extends ChunkMesher<CompactVertexSet> {
     public Chunk_GreedyMesherWithLight(ChunkVoxels voxels, Vector3i chunkPosition) {
         super(voxels, chunkPosition);
         dims = new int[]{voxels.size.x, voxels.size.y, voxels.size.z};
-        mask = MemoryUtil.memAllocInt(Chunk.WIDTH * Chunk.HEIGHT);
-        lightMask = MemoryUtil.memAllocInt(Chunk.WIDTH * Chunk.HEIGHT);
+        mask = IntBuffer.allocate(Chunk.WIDTH * Chunk.HEIGHT);
+        lightMask = IntBuffer.allocate(Chunk.WIDTH * Chunk.HEIGHT);
     }
 
 
@@ -85,15 +84,15 @@ public class Chunk_GreedyMesherWithLight extends ChunkMesher<CompactVertexSet> {
         n = 0;
         u = 0;
         v = 0;
-        final IntBuffer quadSize = stack.mallocInt(2);
+        final IntBuffer quadSize = IntBuffer.allocate(2);
         int maskValue, lightMaskValue;
 
         /**
          * These are just working variables to hold two faces during comparison.
          */
-        Vector3i voxelPos = new Vector3i(stack.mallocInt(3));
-        ShortBuffer thisPlaneVoxel = stack.mallocShort(1);
-        ShortBuffer nextPlaneVoxel = stack.mallocShort(1);
+        Vector3i voxelPos = new Vector3i();
+        ShortBuffer thisPlaneVoxel = ShortBuffer.allocate(1);
+        ShortBuffer nextPlaneVoxel = ShortBuffer.allocate(1);
         Block block, block1;
 
         /*

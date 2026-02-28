@@ -9,6 +9,11 @@ public class BooleanBuffer {
     private final ByteBuffer byteBuffer;
     private final int bufferSize;
 
+    public BooleanBuffer(int size) {
+        this.byteBuffer = java.nio.ByteBuffer.allocate((size + 7) / 8);
+        this.bufferSize = size;
+    }
+
     public BooleanBuffer(int size, MemoryStack stack) {
         this.byteBuffer = stack.malloc((size + 7) / 8);
         this.bufferSize = size;

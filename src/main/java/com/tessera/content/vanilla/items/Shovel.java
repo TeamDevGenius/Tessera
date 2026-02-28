@@ -7,7 +7,7 @@ public class Shovel extends Item {
 
     public Shovel(String material, int durability, float miningSpeedMultiplier) {
         super("tessera:" + material + "_shovel", MiscUtils.capitalizeWords(material) + " Shovel");
-        setIcon("pp\\" + material + "_shovel.png");
+        setIcon("pp/" + material + "_shovel.png");
         maxStackSize = 1;
         this.miningSpeedMultiplier = miningSpeedMultiplier;
         tags.add("shovel");

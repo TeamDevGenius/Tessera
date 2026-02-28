@@ -1,6 +1,7 @@
 #version 300 es
 precision highp float;
 precision highp int;
+precision highp sampler2DArray;
 
 uniform sampler2DArray u_texture;
 uniform vec4 u_fogColor;

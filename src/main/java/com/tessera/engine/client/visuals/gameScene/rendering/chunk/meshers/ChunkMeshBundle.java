@@ -7,6 +7,7 @@ package com.tessera.engine.client.visuals.gameScene.rendering.chunk.meshers;
 import com.tessera.engine.client.visuals.gameScene.rendering.chunk.mesh.CompactMesh;
 import com.tessera.engine.client.visuals.gameScene.rendering.chunk.mesh.CompactOcclusionMesh;
 import com.tessera.engine.client.visuals.gameScene.rendering.chunk.meshers.bufferSet.vertexSet.TraditionalVertexSet;
+import com.tessera.engine.client.visuals.gameScene.rendering.chunk.meshers.bufferSet.vertexSet.VertexSet_ResizableIntArray;
 import com.tessera.engine.client.visuals.gameScene.rendering.chunk.occlusionCulling.BoundingBoxMesh;
 import com.tessera.engine.utils.ErrorHandler;
 import com.tessera.engine.utils.math.AABB;
@@ -15,8 +16,6 @@ import com.tessera.engine.server.world.chunk.Chunk;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.lwjgl.system.MemoryStack;
 
 /**
  * @author zipCoder933
@@ -65,8 +64,8 @@ public class ChunkMeshBundle {
         setLOD(4);
     }
 
-    final TraditionalVertexSet opaqueBuffer = new TraditionalVertexSet();
-    final TraditionalVertexSet transBuffer = new TraditionalVertexSet();
+    final VertexSet_ResizableIntArray opaqueBuffer = new VertexSet_ResizableIntArray();
+    final VertexSet_ResizableIntArray transBuffer = new VertexSet_ResizableIntArray();
 
     Chunk chunk;
     Terrain terrain;
@@ -99,10 +98,9 @@ public class ChunkMeshBundle {
     public boolean meshesHaveAllSides;
 
 
-    //This compute function is thread safe
     public synchronized void compute() {
         try {
-            try (MemoryStack stack = org.lwjgl.system.MemoryStack.stackPush()) {
+            {
                 meshesHaveAllSides = chunk.neghbors.allFacingNeghborsLoaded;
 
                 //Check if the blocks of this chunk or its neighbors are empty
@@ -121,12 +119,12 @@ public class ChunkMeshBundle {
                 transBuffer.reset();
 
                 if (!blocksAreEmpty) {//We wont check if we are below terrain because a loaded file chunk could be there
-                    UseGM_BooleanBuffer buffer = new UseGM_BooleanBuffer(stack);//Allocate the boolean buffer on the stack
+                    UseGM_BooleanBuffer buffer = new UseGM_BooleanBuffer(); // Java-native, no MemoryStack
                     naiveMesher.buffer_shouldUseGreedyMesher = buffer;
-                    naiveMesher.compute(opaqueBuffer, transBuffer, stack, 1, true); //This contributes as well, but im saving it for later since it plays a small role in memory when not generating the whole mesh
+                    naiveMesher.compute(opaqueBuffer, transBuffer, null, 1, true);
 
                     greedyMesher.buffer_shouldUseGreedyMesher = buffer;
-                    greedyMesher.compute(opaqueBuffer, transBuffer, stack, 1, true);
+                    greedyMesher.compute(opaqueBuffer, transBuffer, null, 1, true);
                 }
 
                 opaqueBuffer.makeVertexSet(); //Buffer wont make verteces if it is empty

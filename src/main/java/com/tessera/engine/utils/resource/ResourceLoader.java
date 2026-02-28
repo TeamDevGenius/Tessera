@@ -1,5 +1,7 @@
 package com.tessera.engine.utils.resource;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
 import com.tessera.engine.utils.ErrorHandler;
 import com.tessera.engine.utils.FileUtils;
 
@@ -27,8 +29,21 @@ public class ResourceLoader {
 
     public InputStream getResourceAsStream(String path) {
         path = formatPath(path);
-        final InputStream in = getContextClassLoader().getResourceAsStream(path);
-        return in == null ? getClass().getResourceAsStream(path) : in;
+        InputStream in = getContextClassLoader().getResourceAsStream(path);
+        if (in == null) in = getClass().getResourceAsStream(path);
+        if (in == null) {
+            // Android fallback: Gdx.files.internal (strip leading '/' since asset paths are relative)
+            try {
+                if (Gdx.app != null && Gdx.files != null) {
+                    String gdxPath = path.startsWith(FILE_SEPARATOR) ? path.substring(1) : path;
+                    FileHandle fh = Gdx.files.internal(gdxPath);
+                    if (fh.exists()) in = fh.read();
+                }
+            } catch (Exception e) {
+                System.err.println("ResourceLoader: Gdx fallback failed for '" + path + "': " + e.getMessage());
+            }
+        }
+        return in;
     }
 
     public URL getResource(String path) {

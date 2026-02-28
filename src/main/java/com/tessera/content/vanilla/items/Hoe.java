@@ -11,7 +11,7 @@ public class Hoe extends Item {
 
     public Hoe(String material, int durability) {
         super("tessera:" + material + "_hoe", MiscUtils.capitalizeWords(material) + " Hoe");
-        setIcon("pp\\"+material + "_hoe.png");
+        setIcon("pp/"+material + "_hoe.png");
         tags.add("tool");
         tags.add("hoe");
         maxDurability = durability;

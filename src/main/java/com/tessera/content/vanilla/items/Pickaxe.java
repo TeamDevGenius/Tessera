@@ -7,7 +7,7 @@ public class Pickaxe extends Item {
 
     public Pickaxe(String material, int durability, float miningSpeedMultiplier) {
         super("tessera:"+ material+"_pickaxe", MiscUtils.capitalizeWords(material) + " Pickaxe");
-        setIcon("pp\\"+material + "_pickaxe.png");
+        setIcon("pp/"+material + "_pickaxe.png");
         maxStackSize = 1;
         tags.add("tool");
         tags.add("pickaxe");

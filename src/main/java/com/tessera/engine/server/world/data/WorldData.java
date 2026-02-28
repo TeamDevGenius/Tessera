@@ -34,6 +34,7 @@ public class WorldData {
     public DataFile data;
 
     public File getChunkFile(Vector3i position) {
+        if (directory == null) return new File("chunk " + position.x + " " + position.y + " " + position.z);
         return new File(this.directory.getAbsolutePath(), "chunk " + position.x + " " + position.y + " " + position.z);
     }
 

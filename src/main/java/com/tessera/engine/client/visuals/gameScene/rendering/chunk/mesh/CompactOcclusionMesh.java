@@ -34,9 +34,14 @@ public class CompactOcclusionMesh extends CompactMesh {
     }
 
     public CompactOcclusionMesh(BoundingBoxMesh boundingBox) {
-        this.samplesPassedLastFrame = 0;
+        this.samplesPassedLastFrame = 1; // visible by default
         this.boundingBox = boundingBox;
-        queryId = GL30.glGenQueries(); // Create an occlusion query
+        try {
+            queryId = GL30.glGenQueries();
+        } catch (UnsatisfiedLinkError | NoClassDefFoundError e) {
+            // GL30 not available (e.g. on Android without LWJGL); queries disabled
+            queryId = -1;
+        }
     }
 
     /*
@@ -64,6 +69,7 @@ The basic layout for query occlusion culling is:
 
 
     public void getQueryResult() {
+        if (queryId == -1) return;
         if (queried) {
             samplesPassedLastFrame = GL30.glGetQueryObjecti(queryId, GL15.GL_QUERY_RESULT);// Get the query result
             if (samplesPassedLastFrame == 0) framesWithNoSamples++;
@@ -73,6 +79,10 @@ The basic layout for query occlusion culling is:
 
 
     public void drawVisible(boolean wireframe) {
+        if (queryId == -1) {
+            if (!isEmpty()) super.draw(wireframe);
+            return;
+        }
         if (samplesPassedLastFrame > 0 && !isEmpty()) {
             boolean canQuery = System.currentTimeMillis() - lastQueryTime > 1000;
             if (canQuery) GL30.glBeginQuery(GL15.GL_SAMPLES_PASSED, queryId); //Start the occlusion query
@@ -106,6 +116,7 @@ The basic layout for query occlusion culling is:
 
 
     public static void startInvisible() {
+        try {
         boundaryShader.bind();
         boundaryMVP.update(GameScene.projection, GameScene.view);
         boundaryMVP.sendToShader(boundaryShader.getID(), boundaryShader.mvpUniform);
@@ -114,17 +125,23 @@ The basic layout for query occlusion culling is:
         GL30.glColorMask(false, false, false, false);
 //        GL30.glDisable(GL30.GL_DEPTH_TEST);//Disable depth test
         GL30.glDisable(GL30.GL_CULL_FACE);  //Disable backface culling
+        } catch (UnsatisfiedLinkError | NoClassDefFoundError ignored) { // GL30 not available on Android
+        }
     }
 
     public static void endInvisible() {
+        try {
         boundaryShader.unbind();
 //        GL30.glEnable(GL30.GL_DEPTH_TEST);  //Enable depth test
         GL30.glDepthMask(true);
         GL30.glColorMask(true, true, true, true);
         GameScene.enableBackfaceCulling(); //Enable backface culling
+        } catch (UnsatisfiedLinkError | NoClassDefFoundError ignored) { // GL30 not available on Android
+        }
     }
 
     public void drawInvisible() {
+        if (queryId == -1) return;
         /**
          * If we are inside the bounding box, the object is not visible becuase backface culling is enabled.
          * A few solutions?
