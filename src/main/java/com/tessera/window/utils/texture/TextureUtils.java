@@ -4,17 +4,21 @@
  */
 package com.tessera.window.utils.texture;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.GL30;
+import com.badlogic.gdx.graphics.Pixmap;
 import com.tessera.engine.utils.resource.ResourceLoader;
 import com.tessera.window.utils.IOUtil;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL30;
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,6 +48,7 @@ import java.util.List;
 import static org.lwjgl.opengl.GL12.glTexImage3D;
 import static org.lwjgl.opengl.GL30.GL_TEXTURE_2D_ARRAY;
 import static org.lwjgl.opengl.GL30.glGenerateMipmap;
+import static org.lwjgl.opengl.GL30.glTexSubImage3D;
 import static org.lwjgl.stb.STBImage.*;
 
 /**
@@ -178,7 +183,7 @@ public class TextureUtils {
                 }
                 texture.buffer = fullImage;
 
-                GL30.glTexSubImage3D(GL_TEXTURE_2D_ARRAY, //stacks another texure on top
+                glTexSubImage3D(GL_TEXTURE_2D_ARRAY, //stacks another texure on top
                         0, 0, 0, i, //image id
                         imageWidth, imageHeight, //image size
                         1, GL_RGBA, GL_UNSIGNED_BYTE, fullImage);
@@ -247,7 +252,7 @@ public class TextureUtils {
             }
 
 // Generate mipmaps:
-            GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
+            glGenerateMipmap(GL11.GL_TEXTURE_2D);
 
             STBImage.stbi_image_free(buffer);
 
@@ -311,7 +316,7 @@ public class TextureUtils {
             }
 
 // Generate mipmaps:
-            GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
+            glGenerateMipmap(GL11.GL_TEXTURE_2D);
 
             STBImage.stbi_image_free(buffer);
 
@@ -381,7 +386,7 @@ public class TextureUtils {
             }
 
 // Generate mipmaps:
-            GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
+            glGenerateMipmap(GL11.GL_TEXTURE_2D);
 
             STBImage.stbi_image_free(buffer);
 
@@ -401,6 +406,139 @@ public class TextureUtils {
             throw new IOException("Unable to load texture: ", e);
         }
     }
+
+    // =========================================================================
+    // libGDX / Android-compatible texture loading methods
+    // These use Gdx.gl30 and Pixmap instead of LWJGL directly.
+    // =========================================================================
+
+    /**
+     * Load a Pixmap from an InputStream, ensuring RGBA8888 format.
+     */
+    public static Pixmap streamToPixmap(InputStream is) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buf = new byte[8192];
+        int read;
+        while ((read = is.read(buf)) != -1) baos.write(buf, 0, read);
+        byte[] imageBytes = baos.toByteArray();
+        Pixmap pixmap = new Pixmap(imageBytes, 0, imageBytes.length);
+        if (pixmap.getFormat() != Pixmap.Format.RGBA8888) {
+            Pixmap converted = new Pixmap(pixmap.getWidth(), pixmap.getHeight(), Pixmap.Format.RGBA8888);
+            converted.drawPixmap(pixmap, 0, 0);
+            pixmap.dispose();
+            pixmap = converted;
+        }
+        return pixmap;
+    }
+
+    private static Pixmap loadPixmapFromRequest(TextureRequest req) throws IOException {
+        if (req.path != null) {
+            InputStream is = resourceLoader.getResourceAsStream(req.path);
+            if (is == null) throw new IOException("Resource not found: " + req.path);
+            return streamToPixmap(is);
+        } else if (req.image != null) {
+            byte[] bytes = new byte[req.image.remaining()];
+            req.image.duplicate().get(bytes);
+            return streamToPixmap(new java.io.ByteArrayInputStream(bytes));
+        }
+        throw new IOException("TextureRequest has no path or image data");
+    }
+
+    /**
+     * Create a GL_TEXTURE_2D_ARRAY using libGDX GL30 calls.
+     * Works on both Android and desktop (via libGDX backend).
+     */
+    public static Texture makeTextureArrayGdx(int imageWidth, int imageHeight, boolean linearFiltering, TextureRequest... files) throws IOException {
+        if (Gdx.gl30 == null) throw new IOException("GL30 not available");
+        GL30 gl30 = Gdx.gl30;
+        int layerCount = files.length;
+
+        IntBuffer tmpBuf = java.nio.ByteBuffer.allocateDirect(4)
+                .order(java.nio.ByteOrder.nativeOrder()).asIntBuffer();
+        Gdx.gl.glGenTextures(1, tmpBuf);
+        int texId = tmpBuf.get(0);
+        Texture texture = new Texture(texId, imageWidth, imageHeight);
+        addTexture(texId);
+
+        Gdx.gl.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, texId);
+        if (linearFiltering) {
+            Gdx.gl.glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL20.GL_TEXTURE_MAG_FILTER, GL20.GL_LINEAR);
+            Gdx.gl.glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL20.GL_TEXTURE_MIN_FILTER, GL20.GL_LINEAR_MIPMAP_LINEAR);
+        } else {
+            Gdx.gl.glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL20.GL_TEXTURE_MIN_FILTER, GL20.GL_NEAREST);
+            Gdx.gl.glTexParameteri(GL30.GL_TEXTURE_2D_ARRAY, GL20.GL_TEXTURE_MAG_FILTER, GL20.GL_NEAREST);
+        }
+
+        gl30.glTexImage3D(GL30.GL_TEXTURE_2D_ARRAY, 0, GL20.GL_RGBA,
+                imageWidth, imageHeight, layerCount, 0, GL20.GL_RGBA, GL20.GL_UNSIGNED_BYTE, null);
+
+        for (int i = 0; i < layerCount; i++) {
+            TextureRequest file = files[i];
+            if (file == null) throw new IOException("TextureRequest at layer " + i + " is null");
+
+            Pixmap pixmap = loadPixmapFromRequest(file);
+
+            if (file.regionX != -1) {
+                Pixmap sub = new Pixmap(file.regionWidth, file.regionHeight, Pixmap.Format.RGBA8888);
+                sub.drawPixmap(pixmap, 0, 0, file.regionX, file.regionY, file.regionWidth, file.regionHeight);
+                pixmap.dispose();
+                pixmap = sub;
+            }
+
+            java.nio.ByteBuffer pixels = pixmap.getPixels();
+            gl30.glTexSubImage3D(GL30.GL_TEXTURE_2D_ARRAY, 0, 0, 0, i,
+                    imageWidth, imageHeight, 1, GL20.GL_RGBA, GL20.GL_UNSIGNED_BYTE, pixels);
+            pixmap.dispose();
+        }
+
+        gl30.glGenerateMipmap(GL30.GL_TEXTURE_2D_ARRAY);
+        Gdx.gl.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, 0);
+        return texture;
+    }
+
+    public static Texture makeTextureArrayGdx(int imageWidth, int imageHeight, boolean linearFiltering, List<TextureRequest> files) throws IOException {
+        return makeTextureArrayGdx(imageWidth, imageHeight, linearFiltering, files.toArray(new TextureRequest[0]));
+    }
+
+    /**
+     * Load a single 2D texture using libGDX Pixmap/GL calls.
+     */
+    public static Texture loadTextureFromResourceGdx(String path, boolean linearFiltering) throws IOException {
+        if (Gdx.gl == null) throw new IOException("GL not available");
+        InputStream is = resourceLoader.getResourceAsStream(path);
+        if (is == null) throw new IOException("Resource not found: " + path);
+        Pixmap pixmap = streamToPixmap(is);
+
+        IntBuffer tmpBuf = java.nio.ByteBuffer.allocateDirect(4)
+                .order(java.nio.ByteOrder.nativeOrder()).asIntBuffer();
+        Gdx.gl.glGenTextures(1, tmpBuf);
+        int texId = tmpBuf.get(0);
+
+        Gdx.gl.glBindTexture(GL20.GL_TEXTURE_2D, texId);
+        Gdx.gl.glPixelStorei(GL20.GL_UNPACK_ALIGNMENT, 1);
+
+        java.nio.ByteBuffer pixels = pixmap.getPixels();
+        Gdx.gl.glTexImage2D(GL20.GL_TEXTURE_2D, 0, GL20.GL_RGBA,
+                pixmap.getWidth(), pixmap.getHeight(), 0, GL20.GL_RGBA, GL20.GL_UNSIGNED_BYTE, pixels);
+
+        if (linearFiltering) {
+            Gdx.gl.glTexParameteri(GL20.GL_TEXTURE_2D, GL20.GL_TEXTURE_MAG_FILTER, GL20.GL_LINEAR);
+            Gdx.gl.glTexParameteri(GL20.GL_TEXTURE_2D, GL20.GL_TEXTURE_MIN_FILTER, GL20.GL_LINEAR_MIPMAP_LINEAR);
+        } else {
+            Gdx.gl.glTexParameteri(GL20.GL_TEXTURE_2D, GL20.GL_TEXTURE_MIN_FILTER, GL20.GL_NEAREST);
+            Gdx.gl.glTexParameteri(GL20.GL_TEXTURE_2D, GL20.GL_TEXTURE_MAG_FILTER, GL20.GL_NEAREST);
+        }
+
+        if (Gdx.gl30 != null) Gdx.gl30.glGenerateMipmap(GL20.GL_TEXTURE_2D);
+        Gdx.gl.glBindTexture(GL20.GL_TEXTURE_2D, 0);
+
+        Texture texture = new Texture(texId, pixmap.getWidth(), pixmap.getHeight());
+        pixmap.dispose();
+        addTexture(texId);
+        return texture;
+    }
+
+    // =========================================================================
 
     public static void deleteAllTextures() {
         for (Integer tex : textures) {

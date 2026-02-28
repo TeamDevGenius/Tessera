@@ -70,6 +70,27 @@ public class Registrys {
                 toolList);
     }
 
+    /**
+     * libGDX / Android-compatible initialisation. Uses Pixmap-based texture loading
+     * instead of LWJGL STBImage, so it works without a native LWJGL context.
+     */
+    public static void initializeGdx(
+            List<Block> blockList, List<EntitySupplier> entityList, List<Item> toolList) throws IOException {
+
+        DEFAULT_TEXTURE = TextureUtils.loadTextureFromResourceGdx("/builtin/default.png", false).id;
+
+        blocks.setup(blockList);
+        entities.setup(entityList);
+        items.setup(
+                DEFAULT_TEXTURE,
+                blocks.textures,
+                blocks.getIdToBlockMap(),
+                entities.getIdMap(),
+                blocks.aliasToIDMap,
+                entities.aliasToIDMap,
+                toolList);
+    }
+
     public static Block getBlock(short blockID) {
         return blocks.getBlock(blockID);
     }

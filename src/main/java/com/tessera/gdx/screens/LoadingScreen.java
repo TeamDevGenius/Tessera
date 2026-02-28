@@ -14,6 +14,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.tessera.TesseraApp;
+import com.tessera.gdx.GdxGameInitializer;
 
 public class LoadingScreen implements Screen {
 
@@ -75,17 +76,25 @@ public class LoadingScreen implements Screen {
     private void startLoading() {
         new Thread(() -> {
             try {
-                statusMessage = "Setting up game...";
-                Thread.sleep(100);
-                statusMessage = "Loading world data...";
-                Thread.sleep(200);
-                statusMessage = "Generating terrain...";
-                Thread.sleep(300);
-                statusMessage = "Finalizing...";
-                Thread.sleep(100);
-                loadComplete = true;
+                // Phase 1: background – no GL calls
+                statusMessage = "Loading game content...";
+                GdxGameInitializer.initLogic(worldName, seed, terrain, null);
+                statusMessage = "Uploading textures...";
+
+                // Phase 2: must run on the GL thread
+                com.badlogic.gdx.Gdx.app.postRunnable(() -> {
+                    try {
+                        GdxGameInitializer.initGLResources(null);
+                        statusMessage = "Done!";
+                        loadComplete = true;
+                    } catch (Exception e) {
+                        statusMessage = "Error: " + e.getMessage();
+                        com.badlogic.gdx.Gdx.app.error("LoadingScreen", "GL init failed", e);
+                    }
+                });
             } catch (Exception e) {
                 statusMessage = "Error: " + e.getMessage();
+                com.badlogic.gdx.Gdx.app.error("LoadingScreen", "Logic init failed", e);
             }
         }, "WorldLoader").start();
     }
