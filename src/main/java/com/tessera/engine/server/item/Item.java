@@ -171,7 +171,12 @@ public class Item implements Comparable<Item> {
         if (iconFilename != null) { //If we have a custom icon
             try {
                 Texture icon = TextureUtils.loadTextureFromResource("/assets/tessera/textures/item/" + iconFilename, false);
-                setIcon(icon.id);
+                if (icon != null) {
+                    setIcon(icon.id);
+                } else {
+                    System.err.println("Item.init: missing item icon texture '" + iconFilename + "' for item: " + id);
+                    setIcon(defaultIcon);
+                }
             } catch (Exception e) {
                 setIcon(defaultIcon);
             }
@@ -180,12 +185,22 @@ public class Item implements Comparable<Item> {
 //            System.out.println("Block icon file: " + blockIcon.getAbsolutePath());
             if (blockIcon.exists()) {
                 Texture icon = TextureUtils.loadTextureFromFile(blockIcon, true);
-                setIcon(icon.id);
+                if (icon != null) {
+                    setIcon(icon.id);
+                } else {
+                    System.err.println("Item.init: missing block icon file for item: " + id);
+                    setIcon(defaultIcon);
+                }
             } else {//If there is no generated block icon, default to the texture
                 String file = textures.getTextureFile(getBlock().texture.NEG_Y_NAME);
                 if (file != null) {
                     Texture tex = TextureUtils.loadTextureFromResource(file, false);
-                    setIcon(tex.id);
+                    if (tex != null) {
+                        setIcon(tex.id);
+                    } else {
+                        System.err.println("Item.init: missing block texture '" + file + "' for item: " + id);
+                        setIcon(defaultIcon);
+                    }
                 } else {
                     setIcon(defaultIcon);
                 }

@@ -11,8 +11,9 @@ import com.tessera.engine.utils.resource.ResourceUtils;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -119,7 +120,9 @@ public class ErrorHandler {
         if (!logFile.getParentFile().exists()) logFile.getParentFile().mkdirs();
 
         if (devMessage != null) errorStr = "Message: \t" + devMessage + "\n" + errorStr;
-        Files.writeString(logFile.toPath(), errorStr);
+        try (FileOutputStream fos = new FileOutputStream(logFile)) {
+            fos.write(errorStr.getBytes(StandardCharsets.UTF_8));
+        }
         return logFile;
     }
 
