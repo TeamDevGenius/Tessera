@@ -11,7 +11,7 @@ public class AndroidLauncher extends AndroidApplication {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         AndroidApplicationConfiguration config = new AndroidApplicationConfiguration();
-        config.useGL30 = false;
+        config.useGL30 = true;
         config.numSamples = 2;
         config.useAccelerometer = false;
         config.useCompass = false;
