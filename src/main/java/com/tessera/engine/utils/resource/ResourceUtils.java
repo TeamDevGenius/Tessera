@@ -35,7 +35,7 @@ public class ResourceUtils {
         System.out.println("\tLocal path: " + LOCAL_DIR);
         System.out.println("\tResource path: " + RESOURCE_DIR);
 
-        BLOCK_ICON_DIR = file("items\\blocks\\icons");
+        BLOCK_ICON_DIR = file("items/blocks/icons");
     }
 
     public static void initialize(boolean gameDevResources, String appDataDir) {

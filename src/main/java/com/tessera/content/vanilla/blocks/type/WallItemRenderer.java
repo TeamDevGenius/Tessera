@@ -35,10 +35,10 @@ public class WallItemRenderer extends BlockType {
             b.toughness = 0.1f;
         };
         generate3DIcon = false;
-        wall0 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/wall\\wall0.blockType"), renderSide_subBlock);
-        wall1 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/wall\\wall1.blockType"), renderSide_subBlock);
-        wall2 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/wall\\wall2.blockType"), renderSide_subBlock);
-        wall3 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/wall\\wall3.blockType"), renderSide_subBlock);
+        wall0 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/wall/wall0.blockType"), renderSide_subBlock);
+        wall1 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/wall/wall1.blockType"), renderSide_subBlock);
+        wall2 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/wall/wall2.blockType"), renderSide_subBlock);
+        wall3 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/wall/wall3.blockType"), renderSide_subBlock);
     }
 
     public boolean allowExistence(Block block, int worldX, int worldY, int worldZ) {

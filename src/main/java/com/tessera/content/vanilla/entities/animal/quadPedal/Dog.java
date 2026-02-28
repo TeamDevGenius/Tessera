@@ -26,11 +26,11 @@ public class Dog extends QuadPedalLandAnimal {
     public QuadPedalLandAnimal_StaticData getStaticData() throws IOException {
         if (staticData == null) {
             staticData = new QuadPedalLandAnimal_StaticData(
-                    "/assets/tessera/entities/animal\\dog\\large\\body.obj",
-                    "/assets/tessera/entities/animal\\dog\\large\\sitting.obj",
-                    "/assets/tessera/entities/animal\\dog\\large\\leg.obj",
+                    "/assets/tessera/entities/animal/dog/large/body.obj",
+                    "/assets/tessera/entities/animal/dog/large/sitting.obj",
+                    "/assets/tessera/entities/animal/dog/large/leg.obj",
                     null,
-                    "/assets/tessera/entities/animal\\dog\\textures");
+                    "/assets/tessera/entities/animal/dog/textures");
         }
         return staticData;
     }

@@ -23,9 +23,9 @@ public class PaneRenderer extends BlockType {
         //         1.6f, ResourceUtils.resource("block types\\pane\\vertical.obj"));
         // ObjToBlockModel.parseFile(null, false, 1.6f, ResourceUtils.resource("block types\\pane\\horizontal.obj"));
 
-        horizontal = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/pane\\horizontal.blockType"), renderSide_subBlock);
-        vertical0 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/pane\\vertical0.blockType"), renderSide_subBlock);
-        vertical1 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/pane\\vertical1.blockType"), renderSide_subBlock);
+        horizontal = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/pane/horizontal.blockType"), renderSide_subBlock);
+        vertical0 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/pane/vertical0.blockType"), renderSide_subBlock);
+        vertical1 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/pane/vertical1.blockType"), renderSide_subBlock);
         initializationCallback = (b) -> {
             b.initialBlockData = (existingData, player) -> {
                 BlockData data = player.camera.simplifiedPanTiltAsBlockData(new BlockData(2));

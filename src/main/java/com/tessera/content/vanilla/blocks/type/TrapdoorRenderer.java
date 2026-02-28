@@ -54,14 +54,14 @@ public class TrapdoorRenderer extends BlockType {
             }
         };
 
-        open0 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/trapdoor\\open0.blockType"), renderSide);
-        open1 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/trapdoor\\open1.blockType"), renderSide);
-        open2 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/trapdoor\\open2.blockType"), renderSide);
-        open3 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/trapdoor\\open3.blockType"), renderSide);
-        closed0 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/trapdoor\\closed0.blockType"), renderSide);
-        closed1 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/trapdoor\\closed1.blockType"), renderSide);
-        closed2 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/trapdoor\\closed2.blockType"), renderSide);
-        closed3 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/trapdoor\\closed3.blockType"), renderSide);
+        open0 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/trapdoor/open0.blockType"), renderSide);
+        open1 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/trapdoor/open1.blockType"), renderSide);
+        open2 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/trapdoor/open2.blockType"), renderSide);
+        open3 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/trapdoor/open3.blockType"), renderSide);
+        closed0 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/trapdoor/closed0.blockType"), renderSide);
+        closed1 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/trapdoor/closed1.blockType"), renderSide);
+        closed2 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/trapdoor/closed2.blockType"), renderSide);
+        closed3 = BlockModelLoader.load(resourceLoader.getResourceAsStream("/assets/tessera/models/block/trapdoor/closed3.blockType"), renderSide);
     }
 
     final float ONE_SIXTEENTH = 1 / 16f;

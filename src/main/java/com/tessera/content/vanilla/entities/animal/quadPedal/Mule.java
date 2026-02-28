@@ -18,11 +18,11 @@ public class Mule extends QuadPedalLandAnimal {
     public QuadPedalLandAnimal_StaticData getStaticData() throws IOException {
         if (staticData == null) {
             staticData = new QuadPedalLandAnimal_StaticData(
-                    "/assets/tessera/entities/animal\\horse\\mule\\body.obj",
+                    "/assets/tessera/entities/animal/horse/mule/body.obj",
                     null,
-                    "/assets/tessera/entities/animal\\horse\\mule\\leg.obj",
-                    "/assets/tessera/entities/animal\\horse\\mule\\saddle.obj",
-                    "/assets/tessera/entities/animal\\horse\\mule\\textures");
+                    "/assets/tessera/entities/animal/horse/mule/leg.obj",
+                    "/assets/tessera/entities/animal/horse/mule/saddle.obj",
+                    "/assets/tessera/entities/animal/horse/mule/textures");
         }
         return staticData;
     }
