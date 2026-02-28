@@ -223,9 +223,9 @@ public class ResourceLister {
         try {
             zf = new ZipFile(file);
         } catch (final ZipException e) {
-            throw new Error(e);
+            return retval;
         } catch (final IOException e) {
-            throw new Error(e);
+            return retval;
         }
         final Enumeration e = zf.entries();
         while (e.hasMoreElements()) {
