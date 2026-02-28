@@ -34,12 +34,14 @@ public class ResourceLoader {
         if (in == null) {
             // Android fallback: Gdx.files.internal (strip leading '/' since asset paths are relative)
             try {
-                if (Gdx.files != null) {
+                if (Gdx.app != null && Gdx.files != null) {
                     String gdxPath = path.startsWith(FILE_SEPARATOR) ? path.substring(1) : path;
                     FileHandle fh = Gdx.files.internal(gdxPath);
                     if (fh.exists()) in = fh.read();
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                System.err.println("ResourceLoader: Gdx fallback failed for '" + path + "': " + e.getMessage());
+            }
         }
         return in;
     }
