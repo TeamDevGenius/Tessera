@@ -23,7 +23,9 @@ public class TouchControls implements InputProcessor {
     private float pan = 0f;
     private float tilt = 0f;
 
-    public TouchControls(PerspectiveCamera camera) {}
+    public TouchControls(PerspectiveCamera camera) {
+        // camera reference kept available for future use
+    }
 
     public void update(float delta, PerspectiveCamera camera) {
         float moveX = 0, moveZ = 0;

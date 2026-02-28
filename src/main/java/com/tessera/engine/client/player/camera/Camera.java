@@ -36,7 +36,7 @@ public class Camera {
     public static final double TWO_PI = Math.PI * 2;
     public final static Vector3f up = new Vector3f(0f, -1f, 0f);
     private final float sensitivity = 0.35f;
-    private int mouseX, mouseY;
+
     private final UserControlledPlayer player;
     private final ClientWindow window;
 

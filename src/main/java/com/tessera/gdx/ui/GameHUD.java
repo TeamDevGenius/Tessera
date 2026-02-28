@@ -30,15 +30,12 @@ public class GameHUD {
 
         stage.addActor(topLeft);
 
-        // Crosshair - center it approximately on the screen
+        // Crosshair - use a centered fill-parent table so it repositions on resize
+        Table crosshairTable = new Table();
+        crosshairTable.setFillParent(true);
         Label crosshair = new Label("+", new Label.LabelStyle(font, Color.WHITE));
-        float crosshairOffsetX = crosshair.getMinWidth() / 2f;
-        float crosshairOffsetY = crosshair.getMinHeight() / 2f;
-        crosshair.setPosition(
-            Gdx.graphics.getWidth() / 2f - crosshairOffsetX,
-            Gdx.graphics.getHeight() / 2f - crosshairOffsetY
-        );
-        stage.addActor(crosshair);
+        crosshairTable.add(crosshair);
+        stage.addActor(crosshairTable);
     }
 
     public void update(float delta, PerspectiveCamera camera) {

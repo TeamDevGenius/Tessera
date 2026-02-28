@@ -110,12 +110,29 @@ public class MainMenuScreen implements Screen {
             }
         });
 
+        settingsBtn.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                showSettingsDialog();
+            }
+        });
+
         exitBtn.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 Gdx.app.exit();
             }
         });
+    }
+
+    private void showSettingsDialog() {
+        Dialog dialog = new Dialog("Settings", skin) {
+            @Override
+            protected void result(Object object) { }
+        };
+        dialog.text("Settings coming soon.");
+        dialog.button("OK", true);
+        dialog.show(stage);
     }
 
     private void showNewWorldDialog() {
