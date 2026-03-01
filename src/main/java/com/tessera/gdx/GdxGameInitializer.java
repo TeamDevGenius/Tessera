@@ -40,6 +40,8 @@ public class GdxGameInitializer {
     private static List<Block> pendingBlockList;
     private static List<EntitySupplier> pendingEntityList;
     private static List<Item> pendingItemList;
+    private static String pendingWorldName;
+    private static int pendingSeed;
 
     /** The world instance used by the GDX/Android render path. */
     public static World gdxWorld;
@@ -54,6 +56,9 @@ public class GdxGameInitializer {
         if (progress != null) progress.setTask("Initializing resources...");
         ResourceUtils.initialize(false, null);
         ResourceLister.init();
+
+        pendingWorldName = (worldName != null && !worldName.isEmpty()) ? worldName : "world";
+        pendingSeed = seed;
 
         if (progress != null) progress.setTask("Registering block types...");
         registerBlockTypes();
@@ -105,7 +110,8 @@ public class GdxGameInitializer {
         if (gdxWorld.terrain != null) {
             com.tessera.engine.utils.option.OptionsList emptyOptions =
                     new com.tessera.engine.utils.option.OptionsList();
-            gdxWorld.terrain.initForWorld(0, emptyOptions, 0);
+            gdxWorld.terrain.initForWorld(pendingSeed, emptyOptions, 0);
+            gdxWorld.data.makeNew(pendingWorldName, 256, gdxWorld.terrain, pendingSeed);
         }
         gdxWorld.initGdx(Registrys.blocks.textures);
 
@@ -113,6 +119,8 @@ public class GdxGameInitializer {
         pendingBlockList = null;
         pendingEntityList = null;
         pendingItemList = null;
+        pendingWorldName = null;
+        pendingSeed = 0;
     }
 
     // -------------------------------------------------------------------------
