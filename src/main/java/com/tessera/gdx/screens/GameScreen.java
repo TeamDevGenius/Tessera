@@ -29,16 +29,18 @@ public class GameScreen implements Screen {
     @Override
     public void show() {
         camera = new PerspectiveCamera(70, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        camera.position.set(0, 64, 0);
-        camera.lookAt(1, 64, 0);
+        camera.up.set(0, 1, 0);
+        float spawnY = GdxGameInitializer.spawnY;
+        camera.position.set(0, spawnY, 0);
+        camera.lookAt(1, spawnY, 0);
         camera.near = 0.1f;
         camera.far = 512f;
         camera.update();
 
         font = new BitmapFont();
         hudStage = new Stage(new ScreenViewport());
-        hud = new GameHUD(hudStage, font);
         touchControls = new TouchControls(camera);
+        hud = new GameHUD(hudStage, font, touchControls);
 
         if (GdxGameInitializer.gdxWorld != null) {
             worldRenderer = new WorldRenderer(camera, GdxGameInitializer.gdxWorld);
@@ -59,6 +61,7 @@ public class GameScreen implements Screen {
         if (worldRenderer != null) worldRenderer.render(delta);
 
         hud.update(delta, camera);
+        hud.drawShapes();
         hudStage.act(delta);
         hudStage.draw();
     }
@@ -82,6 +85,7 @@ public class GameScreen implements Screen {
     @Override
     public void dispose() {
         if (hudStage != null) { hudStage.dispose(); hudStage = null; }
+        if (hud != null) { hud.dispose(); hud = null; }
         if (font != null) { font.dispose(); font = null; }
         if (worldRenderer != null) { worldRenderer.dispose(); worldRenderer = null; }
     }

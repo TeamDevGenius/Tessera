@@ -40,15 +40,18 @@ public class WorldRenderer {
         Vector3f playerPos = new Vector3f(camera.position.x, camera.position.y, camera.position.z);
         world.gdxUpdateChunks(playerPos, frameCount++);
 
-        // Convert GDX camera matrices to JOML
+        // Convert GDX camera matrices to JOML.
+        // The engine world uses +Y-down while OpenGL uses +Y-up.
+        // Scale Y by -1 in world space so the view aligns correctly.
         jomlProjection.set(camera.projection.val);
         jomlView.set(camera.view.val);
+        jomlView.scale(1f, -1f, 1f);
 
         // Enable depth test and backface culling
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
         Gdx.gl.glDepthFunc(GL20.GL_LESS);
         Gdx.gl.glEnable(GL20.GL_CULL_FACE);
-        Gdx.gl.glCullFace(GL20.GL_BACK);
+        Gdx.gl.glCullFace(GL20.GL_FRONT); // Y-flip reverses winding; cull original back-faces (now front)
 
         // Bind texture array
         Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
