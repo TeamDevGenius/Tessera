@@ -30,8 +30,9 @@ public class GameScreen implements Screen {
     @Override
     public void show() {
         camera = new PerspectiveCamera(70, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        camera.position.set(0, 64, 0);
-        camera.lookAt(1, 64, 0);
+        camera.up.set(0, -1, 0);           // engine world is +Y down
+        camera.position.set(0, -64, 0);    // spawn above terrain in engine coords
+        camera.lookAt(1, -64, 0);
         camera.near = 0.1f;
         camera.far = 512f;
         camera.update();
@@ -39,7 +40,7 @@ public class GameScreen implements Screen {
         font = new BitmapFont();
         hudStage = new Stage(new ScreenViewport());
         touchControls = new TouchControls(camera, GdxGameInitializer.gdxWorld);
-        hud = new GameHUD(hudStage, font, app, touchControls::jump);
+        hud = new GameHUD(hudStage, font, app, touchControls::jump, touchControls, this);
 
         // HUD stage must handle taps first so pause/jump buttons work; fall through to touch controls
         Gdx.input.setInputProcessor(new InputMultiplexer(hudStage, touchControls));

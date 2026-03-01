@@ -13,11 +13,11 @@ import com.tessera.engine.server.world.World;
 
 public class TouchControls implements InputProcessor {
 
-    private static final float SENSITIVITY     = 0.2f;
+    public static float        SENSITIVITY     = 0.2f;
     private static final float DEAD_ZONE       = 20f;
     private static final float MOVE_SPEED      = 8f;
-    private static final float GRAVITY         = -20f;
-    private static final float JUMP_VELOCITY   = 8f;
+    private static final float GRAVITY         =  20f;  // +Y is DOWN in engine coords
+    private static final float JUMP_VELOCITY   = -8f;   // jump is -Y (upward)
     private static final float PLAYER_HEIGHT   = 1.8f;
     private static final float JOYSTICK_RADIUS = 80f;
     /** Head-clearance offset used for ceiling collision: slightly above the eye-level position. */
@@ -40,6 +40,11 @@ public class TouchControls implements InputProcessor {
     // Player physics
     private float   velocityY  = 0f;
     private boolean isOnGround = false;
+    private boolean isFlying   = false;
+
+    // Break / place flags (consumed each frame by game logic)
+    private boolean breakPressed = false;
+    private boolean placePressed = false;
 
     private final World world;
 
@@ -87,9 +92,38 @@ public class TouchControls implements InputProcessor {
      */
     public void jump() {
         if (isOnGround) {
-            velocityY  = JUMP_VELOCITY;
+            velocityY  = JUMP_VELOCITY;  // -8f kicks toward -Y (sky)
             isOnGround = false;
         }
+    }
+
+    /** Signal that the player wants to break (remove) a block this frame. */
+    public void onBreakPressed() {
+        breakPressed = true;
+        Gdx.app.log("TouchControls", "break pressed");
+    }
+
+    /** Signal that the player wants to place a block this frame. */
+    public void onPlacePressed() {
+        placePressed = true;
+        Gdx.app.log("TouchControls", "place pressed");
+    }
+
+    /** Consumes and returns the break-pressed flag. */
+    public boolean consumeBreak() {
+        boolean wasPressed = breakPressed; breakPressed = false; return wasPressed;
+    }
+
+    /** Consumes and returns the place-pressed flag. */
+    public boolean consumePlace() {
+        boolean wasPressed = placePressed; placePressed = false; return wasPressed;
+    }
+
+    public boolean isFlying() { return isFlying; }
+
+    public void toggleFly() {
+        isFlying = !isFlying;
+        Gdx.app.log("TouchControls", "fly mode: " + isFlying);
     }
 
     // -------------------------------------------------------------------------
@@ -106,7 +140,7 @@ public class TouchControls implements InputProcessor {
         // Rebuild camera direction from pan/tilt
         camera.direction.set(
             (float) (Math.cos(pan) * Math.cos(tilt)),
-            (float) (-Math.sin(tilt)),
+            (float) ( Math.sin(tilt)),              // engine +Y is down, so positive sin tilts down
             (float) (Math.sin(pan) * Math.cos(tilt))
         );
         camera.direction.nor();
@@ -121,22 +155,21 @@ public class TouchControls implements InputProcessor {
         camera.position.mulAdd(right,    moveX * MOVE_SPEED * delta);
 
         // --- Vertical physics (gravity + collision) ---
-        velocityY += GRAVITY * delta;
+        // Engine coordinate system: +Y = DOWN (toward ground), -Y = UP (toward sky)
+        velocityY += GRAVITY * delta;   // GRAVITY = +20f pulls toward +Y (down)
         float newY = camera.position.y + velocityY * delta;
 
         if (world != null) {
-            int   camX = (int) Math.floor(camera.position.x);
-            int   camZ = (int) Math.floor(camera.position.z);
+            int camX = (int) Math.floor(camera.position.x);
+            int camZ = (int) Math.floor(camera.position.z);
 
-            if (velocityY <= 0) {
-                // Falling – check ground
-                float feetNewY    = newY - PLAYER_HEIGHT;
-                int   blockBelowY = (int) Math.floor(feetNewY);
+            if (velocityY >= 0) {
+                // Falling toward ground (+Y direction) — check block below feet
+                int feetBlockY = (int) Math.floor(newY + PLAYER_HEIGHT);
                 com.tessera.engine.server.block.Block blockBelow =
-                        world.getBlock(camX, blockBelowY, camZ);
+                        world.getBlock(camX, feetBlockY, camZ);
                 if (blockBelow != null && blockBelow.solid) {
-                    // Land on top of the block
-                    camera.position.y = blockBelowY + 1 + PLAYER_HEIGHT;
+                    camera.position.y = feetBlockY - PLAYER_HEIGHT;  // stand on top of block
                     velocityY  = 0f;
                     isOnGround = true;
                 } else {
@@ -144,13 +177,13 @@ public class TouchControls implements InputProcessor {
                     isOnGround = false;
                 }
             } else {
-                // Rising – check ceiling
-                int headNewY = (int) Math.floor(newY + HEAD_CLEARANCE);
+                // Rising toward sky (-Y direction) — check block above head
+                int headBlockY = (int) Math.floor(newY - HEAD_CLEARANCE);
                 com.tessera.engine.server.block.Block blockAbove =
-                        world.getBlock(camX, headNewY, camZ);
+                        world.getBlock(camX, headBlockY, camZ);
                 if (blockAbove != null && blockAbove.solid) {
                     velocityY = 0f;
-                    // Stay at current Y
+                    // stay at current Y
                 } else {
                     camera.position.y = newY;
                 }
@@ -249,7 +282,7 @@ public class TouchControls implements InputProcessor {
             float dx = screenX - lookLastX;
             float dy = screenY - lookLastY;
             pan  += dx * SENSITIVITY * 0.01f; // drag right → turn right
-            tilt += dy * SENSITIVITY * 0.01f; // drag down  → look down
+            tilt -= dy * SENSITIVITY * 0.01f; // drag down  → look down (flip for engine -Y-up)
             tilt  = Math.max(-1.5f, Math.min(1.5f, tilt));
             lookLastX = screenX;
             lookLastY = screenY;

@@ -13,6 +13,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.tessera.TesseraApp;
+import com.tessera.gdx.input.TouchControls;
 import com.tessera.gdx.ui.UiTheme;
 
 /**
@@ -24,11 +25,13 @@ public class PauseMenuScreen implements Screen {
     private final TesseraApp app;
     /** The game screen to return to when RESUME is pressed. May be null (creates a new GameScreen). */
     private final Screen gameScreen;
+    /** Optional touch controls reference forwarded to the settings screen. */
+    private final TouchControls touchControls;
     private Stage stage;
     private Skin skin;
 
     public PauseMenuScreen(TesseraApp app) {
-        this(app, null);
+        this(app, null, null);
     }
 
     /**
@@ -36,8 +39,13 @@ public class PauseMenuScreen implements Screen {
      * @param gameScreen the screen to return to when the player resumes; if null a new GameScreen is created
      */
     public PauseMenuScreen(TesseraApp app, Screen gameScreen) {
-        this.app        = app;
-        this.gameScreen = gameScreen;
+        this(app, gameScreen, null);
+    }
+
+    public PauseMenuScreen(TesseraApp app, Screen gameScreen, TouchControls touchControls) {
+        this.app           = app;
+        this.gameScreen    = gameScreen;
+        this.touchControls = touchControls;
     }
 
     @Override
@@ -72,7 +80,9 @@ public class PauseMenuScreen implements Screen {
         TextButton settingsBtn = new TextButton("SETTINGS", skin);
         settingsBtn.addListener(new ChangeListener() {
             @Override public void changed(ChangeEvent e, Actor a) {
-                app.setScreen(new SettingsScreen(app, new PauseMenuScreen(app, gameScreen)));
+                app.setScreen(new SettingsScreen(app,
+                        new PauseMenuScreen(app, gameScreen, touchControls),
+                        touchControls));
             }
         });
         panel.add(settingsBtn).width(UiTheme.BTN_WIDTH).height(UiTheme.BTN_HEIGHT).padBottom(12).row();
