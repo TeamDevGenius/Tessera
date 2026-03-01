@@ -19,6 +19,7 @@ import com.tessera.engine.server.world.data.WorldData;
 import com.tessera.engine.utils.progress.ProgressData;
 import com.tessera.engine.utils.resource.ResourceLister;
 import com.tessera.engine.utils.resource.ResourceUtils;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +46,9 @@ public class GdxGameInitializer {
 
     /** The world instance used by the GDX/Android render path. */
     public static World gdxWorld;
+
+    /** Y coordinate of the computed surface spawn point, used to set initial camera height. */
+    public static float spawnY = 64f;
 
     /**
      * Phase 1 – runs on a background thread.
@@ -115,6 +119,10 @@ public class GdxGameInitializer {
         }
         gdxWorld.initGdx(Registrys.blocks.textures);
 
+        // Compute surface spawn Y: generate spawn area then scan downward for solid block
+        if (progress != null) progress.setTask("Computing spawn point...");
+        spawnY = computeSpawnY();
+
         // Clean up intermediate lists to allow GC
         pendingBlockList = null;
         pendingEntityList = null;
@@ -124,6 +132,27 @@ public class GdxGameInitializer {
     }
 
     // -------------------------------------------------------------------------
+
+    /**
+     * Generates spawn-area chunks and scans downward (increasing Y = downward in this engine)
+     * to find the first solid surface block at world origin X=0, Z=0.
+     */
+    private static float computeSpawnY() {
+        // Generate chunks near the origin so block data is available
+        Vector3f probe = new Vector3f(0, World.WORLD_TOP_Y, 0);
+        gdxWorld.fillChunksAroundPlayer(probe, true);
+        gdxWorld.chunks.values().forEach(c -> c.prepare(gdxWorld.terrain, 0, false));
+
+        // Scan from top to bottom for the first solid block at X=0, Z=0
+        for (int y = World.WORLD_TOP_Y; y < World.WORLD_BOTTOM_Y; y++) {
+            Block b = gdxWorld.getBlock(0, y, 0);
+            if (b != null && b.solid) {
+                // Place player eyes 2 units above the surface
+                return y - 2f;
+            }
+        }
+        return 64f; // fallback default
+    }
 
     private static void registerBlockTypes() throws Exception {
         Registrys.blocks.addBlockType("sprite",      RenderType.SPRITE,            new SpriteRenderer());

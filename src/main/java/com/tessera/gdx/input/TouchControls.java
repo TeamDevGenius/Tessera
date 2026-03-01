@@ -97,7 +97,7 @@ public class TouchControls implements InputProcessor {
         if (pointer == lookPointer) {
             float dx = screenX - lookLastX;
             float dy = screenY - lookLastY;
-            pan -= dx * SENSITIVITY * 0.01f;
+            pan += dx * SENSITIVITY * 0.01f;
             tilt -= dy * SENSITIVITY * 0.01f;
             tilt = Math.max(-1.5f, Math.min(1.5f, tilt));
             lookLastX = screenX;
@@ -112,4 +112,20 @@ public class TouchControls implements InputProcessor {
     @Override public boolean mouseMoved(int screenX, int screenY) { return false; }
     @Override public boolean scrolled(float amountX, float amountY) { return false; }
     @Override public boolean touchCancelled(int screenX, int screenY, int pointer, int button) { return false; }
+
+    // --- Joystick state getters for HUD drawing ---
+    public float getJoystickStartX() { return joystickStartX; }
+    public float getJoystickStartY() { return joystickStartY; }
+    public float getJoystickDX() { return joystickDX; }
+    public float getJoystickDY() { return joystickDY; }
+    public boolean isJoystickActive() { return joystickPointer != -1; }
+
+    // --- Jump ---
+    private boolean jumpPressed = false;
+    public void triggerJump() { jumpPressed = true; }
+    public boolean consumeJump() {
+        boolean v = jumpPressed;
+        jumpPressed = false;
+        return v;
+    }
 }
