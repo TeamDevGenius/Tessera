@@ -36,6 +36,26 @@ public class UiTheme {
     public static final int MIN_TOUCH  = 48;
 
     /**
+     * Returns a pixel value scaled by the device's logical display density,
+     * ensuring touch targets are comfortably large on high-DPI screens.
+     * Falls back to the raw {@code dp} value if a display is not yet available.
+     */
+    public static int dp(float dp) {
+        try {
+            float density = com.badlogic.gdx.Gdx.graphics.getDensity();
+            if (density > 0f) return Math.round(dp * density);
+        } catch (Throwable ignored) {}
+        return Math.round(dp);
+    }
+
+    /** Button width scaled to display density. */
+    public static int btnWidth()  { return dp(BTN_WIDTH);  }
+    /** Button height scaled to display density. */
+    public static int btnHeight() { return dp(BTN_HEIGHT); }
+    /** Minimum touch-target size scaled to display density. */
+    public static int minTouch()  { return dp(MIN_TOUCH);  }
+
+    /**
      * Builds a Skin with the Tessera dark theme applied.
      * The font is a scaled-up default BitmapFont so it is readable on mobile.
      */

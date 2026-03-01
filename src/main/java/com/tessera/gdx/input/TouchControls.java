@@ -10,18 +10,20 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.tessera.engine.server.world.World;
+import com.tessera.gdx.screens.SettingsScreen;
 
 public class TouchControls implements InputProcessor {
 
-    private static final float SENSITIVITY     = 0.2f;
-    private static final float DEAD_ZONE       = 20f;
-    private static final float MOVE_SPEED      = 8f;
-    private static final float GRAVITY         = -20f;
-    private static final float JUMP_VELOCITY   = 8f;
-    private static final float PLAYER_HEIGHT   = 1.8f;
-    private static final float JOYSTICK_RADIUS = 80f;
+    private static final float BASE_SENSITIVITY  = 0.2f;
+    private static final float DEAD_ZONE         = 20f;
+    private static final float MOVE_SPEED        = 8f;
+    private static final float SPRINT_MULTIPLIER = 1.6f;
+    private static final float GRAVITY           = -20f;
+    private static final float JUMP_VELOCITY     = 8f;
+    private static final float PLAYER_HEIGHT     = 1.8f;
+    private static final float JOYSTICK_RADIUS   = 80f;
     /** Head-clearance offset used for ceiling collision: slightly above the eye-level position. */
-    private static final float HEAD_CLEARANCE  = 0.1f;
+    private static final float HEAD_CLEARANCE    = 0.1f;
     private static final int   JOYSTICK_BASE_SIZE  = 80;
     private static final int   JOYSTICK_THUMB_SIZE = 50;
 
@@ -33,6 +35,8 @@ public class TouchControls implements InputProcessor {
     // Camera look (right side)
     private int   lookPointer = -1;
     private float lookLastX, lookLastY;
+    /** Accumulated time that the right-side pointer has been held (for hold-to-break detection). */
+    private float lookHoldTime = 0f;
 
     private float pan  = 0f;
     private float tilt = 0f;
@@ -41,9 +45,27 @@ public class TouchControls implements InputProcessor {
     private float   velocityY  = 0f;
     private boolean isOnGround = false;
 
+    // Movement modifiers (set by HUD buttons)
+    private boolean sprinting = false;
+    private boolean flying    = false;
+    private boolean flyUp     = false;
+    private boolean flyDown   = false;
+    /** Speed for fly-up / fly-down when in creative/freeplay mode. */
+    private static final float FLY_VERTICAL_SPEED = 10f;
+
     private final World world;
 
-    // Joystick overlay textures (created in show, disposed in dispose)
+    /**
+     * Optional callbacks wired by the game screen.
+     * {@code onBreakBlock} is called each frame the right-side pointer is held (> TAP_THRESHOLD).
+     * {@code onPlaceBlock} is called when the right-side pointer is released within TAP_THRESHOLD.
+     */
+    private Runnable onBreakBlock;
+    private Runnable onPlaceBlock;
+    /** Seconds of hold before the touch is treated as "break" rather than "place". */
+    private static final float TAP_THRESHOLD = 0.25f;
+
+    // Joystick overlay textures (created in constructor, disposed in dispose)
     private Texture joystickBaseTexture;
     private Texture joystickThumbTexture;
 
@@ -79,7 +101,39 @@ public class TouchControls implements InputProcessor {
         if (joystickThumbTexture != null) { joystickThumbTexture.dispose(); joystickThumbTexture = null; }
     }
 
-    // -------------------------------------------------------------------------
+    // ── Callbacks for block interactions ──────────────────────────────────────
+
+    /**
+     * Set callbacks for block breaking (hold) and placing (tap).
+     * @param onBreakBlock called each frame the player is holding the look side (break)
+     * @param onPlaceBlock called once when the player taps the look side (place)
+     */
+    public void setBlockInteractionCallbacks(Runnable onBreakBlock, Runnable onPlaceBlock) {
+        this.onBreakBlock = onBreakBlock;
+        this.onPlaceBlock = onPlaceBlock;
+    }
+
+    // ── Sprint / Fly controls (toggled by HUD buttons) ─────────────────────────
+
+    /** Toggle sprint mode on/off. */
+    public void toggleSprint()    { sprinting = !sprinting; }
+    /** Returns whether the player is currently sprinting. */
+    public boolean isSprinting()  { return sprinting; }
+
+    /** Enable or disable fly mode (creative/freeplay). */
+    public void setFlying(boolean flying) {
+        this.flying = flying;
+        if (!flying) velocityY = 0f; // reset vertical velocity when exiting fly
+    }
+    /** Returns whether fly mode is active. */
+    public boolean isFlying() { return flying; }
+
+    /** Begin flying upward (call while fly-up button is pressed). */
+    public void setFlyUp(boolean up)     { this.flyUp   = up; }
+    /** Begin flying downward (call while fly-down button is pressed). */
+    public void setFlyDown(boolean down) { this.flyDown = down; }
+
+    // ── Jump ──────────────────────────────────────────────────────────────────
 
     /**
      * Make the player jump if currently on the ground.
@@ -92,9 +146,10 @@ public class TouchControls implements InputProcessor {
         }
     }
 
-    // -------------------------------------------------------------------------
+    // ── Main update ───────────────────────────────────────────────────────────
 
     public void update(float delta, PerspectiveCamera camera) {
+
         // --- Horizontal movement from left joystick ---
         float moveX = 0, moveZ = 0;
         float dist = (float) Math.sqrt(joystickDX * joystickDX + joystickDY * joystickDY);
@@ -102,6 +157,7 @@ public class TouchControls implements InputProcessor {
             moveX = joystickDX / dist;
             moveZ = joystickDY / dist;
         }
+        float speed = MOVE_SPEED * (sprinting ? SPRINT_MULTIPLIER : 1f);
 
         // Rebuild camera direction from pan/tilt
         camera.direction.set(
@@ -117,52 +173,78 @@ public class TouchControls implements InputProcessor {
         forward.nor();
 
         // Joystick up (negative DY on screen) → forward; joystick right → strafe right
-        camera.position.mulAdd(forward, -moveZ * MOVE_SPEED * delta);
-        camera.position.mulAdd(right,    moveX * MOVE_SPEED * delta);
+        camera.position.mulAdd(forward, -moveZ * speed * delta);
+        camera.position.mulAdd(right,    moveX * speed * delta);
 
-        // --- Vertical physics (gravity + collision) ---
-        velocityY += GRAVITY * delta;
-        float newY = camera.position.y + velocityY * delta;
+        // --- Fly mode (creative/freeplay) or gravity ---
+        if (flying) {
+            // Fly mode: vertical controlled by fly-up / fly-down buttons
+            if (flyUp)   camera.position.y += FLY_VERTICAL_SPEED * delta;
+            if (flyDown) camera.position.y -= FLY_VERTICAL_SPEED * delta;
+            velocityY  = 0f;
+            isOnGround = false;
+        } else {
+            // --- Vertical physics (gravity + collision) ---
+            velocityY += GRAVITY * delta;
+            float newY = camera.position.y + velocityY * delta;
 
-        if (world != null) {
-            int   camX = (int) Math.floor(camera.position.x);
-            int   camZ = (int) Math.floor(camera.position.z);
+            if (world != null) {
+                int camX = (int) Math.floor(camera.position.x);
+                int camZ = (int) Math.floor(camera.position.z);
 
-            if (velocityY <= 0) {
-                // Falling – check ground
-                float feetNewY    = newY - PLAYER_HEIGHT;
-                int   blockBelowY = (int) Math.floor(feetNewY);
-                com.tessera.engine.server.block.Block blockBelow =
-                        world.getBlock(camX, blockBelowY, camZ);
-                if (blockBelow != null && blockBelow.solid) {
-                    // Land on top of the block
-                    camera.position.y = blockBelowY + 1 + PLAYER_HEIGHT;
-                    velocityY  = 0f;
-                    isOnGround = true;
+                if (velocityY <= 0) {
+                    // Falling – check ground
+                    float feetNewY    = newY - PLAYER_HEIGHT;
+                    int   blockBelowY = (int) Math.floor(feetNewY);
+                    com.tessera.engine.server.block.Block blockBelow =
+                            world.getBlock(camX, blockBelowY, camZ);
+                    if (blockBelow != null && blockBelow.solid) {
+                        // Land on top of the block
+                        camera.position.y = blockBelowY + 1 + PLAYER_HEIGHT;
+                        velocityY  = 0f;
+                        isOnGround = true;
+                    } else {
+                        camera.position.y = newY;
+                        isOnGround = false;
+                    }
                 } else {
-                    camera.position.y = newY;
+                    // Rising – check ceiling
+                    int headNewY = (int) Math.floor(newY + HEAD_CLEARANCE);
+                    com.tessera.engine.server.block.Block blockAbove =
+                            world.getBlock(camX, headNewY, camZ);
+                    if (blockAbove != null && blockAbove.solid) {
+                        velocityY = 0f;
+                        // Stay at current Y
+                    } else {
+                        camera.position.y = newY;
+                    }
                     isOnGround = false;
                 }
             } else {
-                // Rising – check ceiling
-                int headNewY = (int) Math.floor(newY + HEAD_CLEARANCE);
-                com.tessera.engine.server.block.Block blockAbove =
-                        world.getBlock(camX, headNewY, camZ);
-                if (blockAbove != null && blockAbove.solid) {
-                    velocityY = 0f;
-                    // Stay at current Y
-                } else {
-                    camera.position.y = newY;
-                }
-                isOnGround = false;
+                // No world loaded – free-fly mode
+                camera.position.y = newY;
             }
-        } else {
-            // No world loaded – free-fly mode
-            camera.position.y = newY;
+        }
+
+        // --- Block break (hold on right side) ---
+        if (lookPointer != -1 && lookHoldTime > TAP_THRESHOLD) {
+            if (onBreakBlock != null) onBreakBlock.run();
+        }
+        lookHoldTime = (lookPointer != -1) ? lookHoldTime + delta : 0f;
+    }
+
+    /** Returns the current camera look sensitivity used for touch-drag. */
+    private float sensitivity() {
+        try {
+            return BASE_SENSITIVITY
+                    * SettingsScreen.prefs().getFloat(SettingsScreen.KEY_SENSITIVITY,
+                                                      SettingsScreen.DEFAULT_SENSITIVITY);
+        } catch (Throwable ignored) {
+            return BASE_SENSITIVITY;
         }
     }
 
-    // -------------------------------------------------------------------------
+    // ── Overlay rendering ─────────────────────────────────────────────────────
 
     /**
      * Draws the on-screen virtual joystick indicator.
@@ -234,7 +316,12 @@ public class TouchControls implements InputProcessor {
             joystickDY = 0;
         }
         if (pointer == lookPointer) {
-            lookPointer = -1;
+            // Short tap on the right side → place block
+            if (lookHoldTime <= TAP_THRESHOLD && onPlaceBlock != null) {
+                onPlaceBlock.run();
+            }
+            lookPointer  = -1;
+            lookHoldTime = 0f;
         }
         return true;
     }
@@ -248,8 +335,9 @@ public class TouchControls implements InputProcessor {
         if (pointer == lookPointer) {
             float dx = screenX - lookLastX;
             float dy = screenY - lookLastY;
-            pan  += dx * SENSITIVITY * 0.01f; // drag right → turn right
-            tilt += dy * SENSITIVITY * 0.01f; // drag down  → look down
+            float sens = sensitivity() * 0.01f;
+            pan  += dx * sens; // drag right → turn right
+            tilt += dy * sens; // drag down  → look down
             tilt  = Math.max(-1.5f, Math.min(1.5f, tilt));
             lookLastX = screenX;
             lookLastY = screenY;
