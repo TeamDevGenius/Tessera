@@ -43,6 +43,8 @@ public class WorldRenderer {
         // Convert GDX camera matrices to JOML
         jomlProjection.set(camera.projection.val);
         jomlView.set(camera.view.val);
+        // Flip Y axis so the engine's +Y-down world maps correctly onto +Y-up OpenGL space
+        jomlView.scale(1, -1, 1);
 
         // Enable depth test and backface culling
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);

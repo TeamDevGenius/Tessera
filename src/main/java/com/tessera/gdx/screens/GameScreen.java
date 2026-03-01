@@ -31,6 +31,7 @@ public class GameScreen implements Screen {
         camera = new PerspectiveCamera(70, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.position.set(0, 64, 0);
         camera.lookAt(1, 64, 0);
+        camera.up.set(0, 1, 0);
         camera.near = 0.1f;
         camera.far = 512f;
         camera.update();
@@ -41,9 +42,28 @@ public class GameScreen implements Screen {
         touchControls = new TouchControls(camera);
 
         if (GdxGameInitializer.gdxWorld != null) {
+            touchControls.setWorld(GdxGameInitializer.gdxWorld);
+            // Scan downward (increasing Y = downward in engine +Y-down space) to find ground
+            float spawnY = 64f;
+            boolean groundFound = false;
+            for (int y = 0; y < 256; y++) {
+                if (GdxGameInitializer.gdxWorld.getBlock(0, y, 0).solid) {
+                    spawnY = y - 2f;
+                    groundFound = true;
+                    break;
+                }
+            }
+            if (!groundFound) {
+                // No solid block found in column — default to just above mid-world
+                spawnY = 62f;
+            }
+            camera.position.set(0, spawnY, 0);
+            camera.update();
+
             worldRenderer = new WorldRenderer(camera, GdxGameInitializer.gdxWorld);
         }
 
+        hud.setTouchControls(touchControls);
         Gdx.input.setInputProcessor(touchControls);
     }
 
@@ -61,12 +81,14 @@ public class GameScreen implements Screen {
         hud.update(delta, camera);
         hudStage.act(delta);
         hudStage.draw();
+        hud.drawShapes();
     }
 
     @Override
     public void resize(int width, int height) {
         camera.viewportWidth = width;
         camera.viewportHeight = height;
+        camera.up.set(0, 1, 0);
         camera.update();
         hudStage.getViewport().update(width, height, true);
     }
@@ -81,6 +103,7 @@ public class GameScreen implements Screen {
 
     @Override
     public void dispose() {
+        if (hud != null) { hud.dispose(); hud = null; }
         if (hudStage != null) { hudStage.dispose(); hudStage = null; }
         if (font != null) { font.dispose(); font = null; }
         if (worldRenderer != null) { worldRenderer.dispose(); worldRenderer = null; }
