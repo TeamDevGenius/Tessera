@@ -28,6 +28,10 @@ public class GameHUD {
     private Skin skin;
 
     public GameHUD(Stage stage, BitmapFont font, TesseraApp app) {
+        this(stage, font, app, null);
+    }
+
+    public GameHUD(Stage stage, BitmapFont font, TesseraApp app, Runnable jumpCallback) {
         this.stage = stage;
         this.app   = app;
         skin = UiTheme.buildSkin();
@@ -75,6 +79,22 @@ public class GameHUD {
         Label crosshair = new Label("+", new Label.LabelStyle(font, Color.WHITE));
         crosshairTable.add(crosshair);
         stage.addActor(crosshairTable);
+
+        // Jump button — bottom-right (large target for thumb)
+        if (jumpCallback != null) {
+            Table bottomRight = new Table();
+            bottomRight.bottom().right();
+            bottomRight.setFillParent(true);
+            bottomRight.pad(20);
+            TextButton jumpBtn = new TextButton("JUMP", skin);
+            jumpBtn.addListener(new ChangeListener() {
+                @Override public void changed(ChangeEvent e, Actor a) {
+                    jumpCallback.run();
+                }
+            });
+            bottomRight.add(jumpBtn).size(130, 90).row();
+            stage.addActor(bottomRight);
+        }
     }
 
     /** Legacy constructor retained for compatibility. */

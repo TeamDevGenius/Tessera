@@ -137,6 +137,8 @@ public class NewWorldScreen implements Screen {
         } catch (NumberFormatException ignored) {
             seed = 0;
         }
+        // 0 means "random" – pick a non-zero seed automatically
+        if (seed == 0) seed = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, Integer.MAX_VALUE);
 
         String terrainName = currentTerrainName();
         app.setScreen(new LoadingScreen(app, name, seed, terrainName));
