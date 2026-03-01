@@ -37,7 +37,7 @@ public class GameScreen implements Screen {
 
         font = new BitmapFont();
         hudStage = new Stage(new ScreenViewport());
-        hud = new GameHUD(hudStage, font);
+        hud = new GameHUD(hudStage, font, app);
         touchControls = new TouchControls(camera);
 
         if (GdxGameInitializer.gdxWorld != null) {
@@ -84,5 +84,6 @@ public class GameScreen implements Screen {
         if (hudStage != null) { hudStage.dispose(); hudStage = null; }
         if (font != null) { font.dispose(); font = null; }
         if (worldRenderer != null) { worldRenderer.dispose(); worldRenderer = null; }
+        if (hud != null) { hud.dispose(); hud = null; }
     }
 }

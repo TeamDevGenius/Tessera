@@ -35,9 +35,10 @@ public class TouchControls implements InputProcessor {
             moveZ = joystickDY / dist;
         }
 
+        // Negate Y so the world is not upside-down (matches engine Camera's Y-up=-1 convention)
         camera.direction.set(
             (float) (Math.cos(pan) * Math.cos(tilt)),
-            (float) Math.sin(tilt),
+            (float) (-Math.sin(tilt)),
             (float) (Math.sin(pan) * Math.cos(tilt))
         );
         camera.direction.nor();

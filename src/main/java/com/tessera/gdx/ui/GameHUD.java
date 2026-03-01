@@ -4,38 +4,82 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.tessera.TesseraApp;
+import com.tessera.gdx.screens.PauseMenuScreen;
 
 public class GameHUD {
 
     private final Stage stage;
+    private final TesseraApp app;
+
     private Label coordsLabel;
     private Label fpsLabel;
+    private Label healthLabel;
+    private Label hungerLabel;
+    private Label airLabel;
 
-    public GameHUD(Stage stage, BitmapFont font) {
+    private Skin skin;
+
+    public GameHUD(Stage stage, BitmapFont font, TesseraApp app) {
         this.stage = stage;
-        Label.LabelStyle style = new Label.LabelStyle(font, Color.WHITE);
+        this.app   = app;
+        skin = UiTheme.buildSkin();
+
+        Label.LabelStyle style    = new Label.LabelStyle(font, Color.WHITE);
+        Label.LabelStyle styleGrn = new Label.LabelStyle(font, Color.GREEN);
+        Label.LabelStyle styleYel = new Label.LabelStyle(font, Color.YELLOW);
+        Label.LabelStyle styleCyn = new Label.LabelStyle(font, Color.CYAN);
 
         coordsLabel = new Label("0, 0, 0", style);
-        fpsLabel = new Label("FPS: 0", style);
+        fpsLabel    = new Label("FPS: 0",  style);
+        healthLabel = new Label("Health: 20", styleGrn);
+        hungerLabel = new Label("Hunger: 20", styleYel);
+        airLabel    = new Label("Air: 20",    styleCyn);
 
+        // Top-left overlay: FPS, coords, health/hunger/air
         Table topLeft = new Table();
         topLeft.top().left();
         topLeft.setFillParent(true);
-        topLeft.pad(5);
+        topLeft.pad(8);
         topLeft.add(fpsLabel).left().row();
         topLeft.add(coordsLabel).left().row();
-
+        topLeft.add(healthLabel).left().row();
+        topLeft.add(hungerLabel).left().row();
+        topLeft.add(airLabel).left().row();
         stage.addActor(topLeft);
 
-        // Crosshair - use a centered fill-parent table so it repositions on resize
+        // Pause button — top-right
+        Table topRight = new Table();
+        topRight.top().right();
+        topRight.setFillParent(true);
+        topRight.pad(8);
+        TextButton pauseBtn = new TextButton("||", skin);
+        pauseBtn.addListener(new ChangeListener() {
+            @Override public void changed(ChangeEvent e, Actor a) {
+                if (app != null) app.setScreen(new PauseMenuScreen(app));
+            }
+        });
+        topRight.add(pauseBtn).size(72, 72).row();
+        stage.addActor(topRight);
+
+        // Crosshair — centred
         Table crosshairTable = new Table();
         crosshairTable.setFillParent(true);
         Label crosshair = new Label("+", new Label.LabelStyle(font, Color.WHITE));
         crosshairTable.add(crosshair);
         stage.addActor(crosshairTable);
+    }
+
+    /** Legacy constructor retained for compatibility. */
+    public GameHUD(Stage stage, BitmapFont font) {
+        this(stage, font, null);
     }
 
     public void update(float delta, PerspectiveCamera camera) {
@@ -44,5 +88,11 @@ public class GameHUD {
                 camera.position.x, camera.position.y, camera.position.z));
         }
         fpsLabel.setText("FPS: " + Gdx.graphics.getFramesPerSecond());
+        // Health/hunger/air labels are static placeholders until the engine player is wired
+    }
+
+    public void dispose() {
+        if (skin != null) { skin.dispose(); skin = null; }
     }
 }
+
