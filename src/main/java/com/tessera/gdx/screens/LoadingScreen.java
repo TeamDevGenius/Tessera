@@ -8,13 +8,17 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.tessera.TesseraApp;
 import com.tessera.gdx.GdxGameInitializer;
+import com.tessera.gdx.ui.UiTheme;
 
 public class LoadingScreen implements Screen {
 
@@ -45,6 +49,7 @@ public class LoadingScreen implements Screen {
     @Override
     public void show() {
         stage = new Stage(new ScreenViewport());
+        Gdx.input.setInputProcessor(stage);
 
         Pixmap pm = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         pm.setColor(Color.WHITE);
@@ -53,11 +58,9 @@ public class LoadingScreen implements Screen {
         pm.dispose();
         whiteRegion = new TextureRegion(whitePixel);
 
-        skin = new Skin();
-        BitmapFont font = new BitmapFont();
-        skin.add("default-font", font);
+        skin = UiTheme.buildSkin();
+        BitmapFont font = skin.getFont("default-font");
         Label.LabelStyle style = new Label.LabelStyle(font, Color.WHITE);
-        skin.add("default", style);
 
         Table table = new Table();
         table.setFillParent(true);
@@ -67,6 +70,15 @@ public class LoadingScreen implements Screen {
 
         statusLabel = new Label(statusMessage, style);
         table.add(statusLabel).padBottom(10).row();
+
+        TextButton cancelBtn = new TextButton("CANCEL", skin);
+        cancelBtn.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                app.setScreen(new MainMenuScreen(app));
+            }
+        });
+        table.add(cancelBtn).width(200).height(60).padTop(20).row();
 
         stage.addActor(table);
 

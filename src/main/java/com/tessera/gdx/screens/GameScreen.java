@@ -1,6 +1,7 @@
 package com.tessera.gdx.screens;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
@@ -37,14 +38,15 @@ public class GameScreen implements Screen {
 
         font = new BitmapFont();
         hudStage = new Stage(new ScreenViewport());
-        hud = new GameHUD(hudStage, font);
-        touchControls = new TouchControls(camera);
+        touchControls = new TouchControls(camera, GdxGameInitializer.gdxWorld);
+        hud = new GameHUD(hudStage, font, app, touchControls::jump);
+
+        // HUD stage must handle taps first so pause/jump buttons work; fall through to touch controls
+        Gdx.input.setInputProcessor(new InputMultiplexer(hudStage, touchControls));
 
         if (GdxGameInitializer.gdxWorld != null) {
             worldRenderer = new WorldRenderer(camera, GdxGameInitializer.gdxWorld);
         }
-
-        Gdx.input.setInputProcessor(touchControls);
     }
 
     @Override
@@ -57,6 +59,8 @@ public class GameScreen implements Screen {
         camera.update();
 
         if (worldRenderer != null) worldRenderer.render(delta);
+
+        touchControls.renderOverlay(app.batch);
 
         hud.update(delta, camera);
         hudStage.act(delta);
@@ -84,5 +88,7 @@ public class GameScreen implements Screen {
         if (hudStage != null) { hudStage.dispose(); hudStage = null; }
         if (font != null) { font.dispose(); font = null; }
         if (worldRenderer != null) { worldRenderer.dispose(); worldRenderer = null; }
+        if (hud != null) { hud.dispose(); hud = null; }
+        if (touchControls != null) { touchControls.dispose(); touchControls = null; }
     }
 }
