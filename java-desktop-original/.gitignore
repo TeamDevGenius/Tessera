@@ -1,0 +1,9 @@
+target
+res/items/blocks/icons
+logs
+.idea/workspace.xml
+/.idea
+/out/
+hs_err_pid*.log
+*.*~
+
