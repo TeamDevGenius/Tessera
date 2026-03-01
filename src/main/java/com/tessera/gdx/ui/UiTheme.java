@@ -5,8 +5,10 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.ui.Window;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 
@@ -57,6 +59,19 @@ public class UiTheme {
 
         Window.WindowStyle windowStyle = new Window.WindowStyle(font, TEXT_COLOR, solid(BTN_UP));
         skin.add("default", windowStyle);
+
+        // TextField style — dark background, white cursor/selection, white text
+        TextField.TextFieldStyle tfStyle = new TextField.TextFieldStyle();
+        tfStyle.font              = font;
+        tfStyle.fontColor         = TEXT_COLOR;
+        tfStyle.background        = solid(BTN_DOWN);
+        tfStyle.focusedBackground = solid(new Color(0.12f, 0.12f, 0.30f, 1f));
+        tfStyle.cursor            = solid(TEXT_COLOR);
+        tfStyle.selection         = solid(new Color(0.3f, 0.3f, 0.7f, 0.7f));
+        skin.add("default", tfStyle);
+
+        // ScrollPane style — no decorations needed for plain scrolling
+        skin.add("default", new ScrollPane.ScrollPaneStyle());
 
         return skin;
     }
