@@ -281,6 +281,7 @@ public class World {
                     playerPosition.x, playerPosition.y, playerPosition.z);
             chunk.inFrustum = true; // Always visible in GDX path
             chunk.prepare(terrain, frame, false);
+            chunk.sendMeshToGPU();
         });
     }
 

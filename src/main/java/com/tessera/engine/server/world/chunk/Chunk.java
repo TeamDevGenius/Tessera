@@ -272,8 +272,6 @@ public class Chunk {
                     if (Client.frameTester != null) Client.frameTester.startProcess();
                     mesherFuture = meshService.submit(() -> {
 
-                        if (Client.world == null || Client.world.data == null) return null; // Quick fix. TODO: remove this line
-
                         meshes.compute();
                         setGenerationStatus(GEN_COMPLETE);
                         return meshes;
