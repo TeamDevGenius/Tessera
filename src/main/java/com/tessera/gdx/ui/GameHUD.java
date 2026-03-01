@@ -1,6 +1,7 @@
 package com.tessera.gdx.ui;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -12,6 +13,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.tessera.TesseraApp;
+import com.tessera.gdx.input.TouchControls;
 import com.tessera.gdx.screens.PauseMenuScreen;
 
 public class GameHUD {
@@ -24,16 +26,24 @@ public class GameHUD {
     private Label healthLabel;
     private Label hungerLabel;
     private Label airLabel;
+    private TextButton flyBtn;
 
     private Skin skin;
+    private TouchControls touchControls;
 
     public GameHUD(Stage stage, BitmapFont font, TesseraApp app) {
-        this(stage, font, app, null);
+        this(stage, font, app, null, null, null);
     }
 
     public GameHUD(Stage stage, BitmapFont font, TesseraApp app, Runnable jumpCallback) {
-        this.stage = stage;
-        this.app   = app;
+        this(stage, font, app, jumpCallback, null, null);
+    }
+
+    public GameHUD(Stage stage, BitmapFont font, TesseraApp app, Runnable jumpCallback,
+                   TouchControls touchControls, Screen gameScreen) {
+        this.stage         = stage;
+        this.app           = app;
+        this.touchControls = touchControls;
         skin = UiTheme.buildSkin();
 
         Label.LabelStyle style    = new Label.LabelStyle(font, Color.WHITE);
@@ -59,7 +69,7 @@ public class GameHUD {
         topLeft.add(airLabel).left().row();
         stage.addActor(topLeft);
 
-        // Pause button — top-right
+        // Top-right: pause button + fly toggle
         Table topRight = new Table();
         topRight.top().right();
         topRight.setFillParent(true);
@@ -67,10 +77,21 @@ public class GameHUD {
         TextButton pauseBtn = new TextButton("||", skin);
         pauseBtn.addListener(new ChangeListener() {
             @Override public void changed(ChangeEvent e, Actor a) {
-                if (app != null) app.setScreen(new PauseMenuScreen(app));
+                if (app != null) app.setScreen(new PauseMenuScreen(app, gameScreen, touchControls));
             }
         });
         topRight.add(pauseBtn).size(72, 72).row();
+
+        flyBtn = new TextButton("FLY: OFF", skin);
+        flyBtn.addListener(new ChangeListener() {
+            @Override public void changed(ChangeEvent e, Actor a) {
+                if (touchControls != null) {
+                    touchControls.toggleFly();
+                    flyBtn.setText(touchControls.isFlying() ? "FLY: ON" : "FLY: OFF");
+                }
+            }
+        });
+        topRight.add(flyBtn).size(100, 60).padTop(8).row();
         stage.addActor(topRight);
 
         // Crosshair — centred
@@ -80,7 +101,42 @@ public class GameHUD {
         crosshairTable.add(crosshair);
         stage.addActor(crosshairTable);
 
-        // Jump button — bottom-right (large target for thumb)
+        // Bottom-left: INVENTORY button
+        Table bottomLeft = new Table();
+        bottomLeft.bottom().left();
+        bottomLeft.setFillParent(true);
+        bottomLeft.pad(20);
+        TextButton inventoryBtn = new TextButton("BAG", skin);
+        inventoryBtn.addListener(new ChangeListener() {
+            @Override public void changed(ChangeEvent e, Actor a) {
+                Gdx.app.log("GameHUD", "Inventory coming soon");
+            }
+        });
+        bottomLeft.add(inventoryBtn).size(100, 90).row();
+        stage.addActor(bottomLeft);
+
+        // Bottom-center: BREAK and PLACE buttons
+        Table bottomCenter = new Table();
+        bottomCenter.bottom();
+        bottomCenter.setFillParent(true);
+        bottomCenter.pad(20);
+        TextButton breakBtn = new TextButton("BREAK", skin);
+        breakBtn.addListener(new ChangeListener() {
+            @Override public void changed(ChangeEvent e, Actor a) {
+                if (touchControls != null) touchControls.onBreakPressed();
+            }
+        });
+        TextButton placeBtn = new TextButton("PLACE", skin);
+        placeBtn.addListener(new ChangeListener() {
+            @Override public void changed(ChangeEvent e, Actor a) {
+                if (touchControls != null) touchControls.onPlacePressed();
+            }
+        });
+        bottomCenter.add(breakBtn).size(110, 80).padRight(12);
+        bottomCenter.add(placeBtn).size(110, 80);
+        stage.addActor(bottomCenter);
+
+        // Bottom-right: JUMP button
         if (jumpCallback != null) {
             Table bottomRight = new Table();
             bottomRight.bottom().right();

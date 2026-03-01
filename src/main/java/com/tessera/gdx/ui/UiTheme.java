@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Slider;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.ui.Window;
@@ -72,6 +73,12 @@ public class UiTheme {
 
         // ScrollPane style — no decorations needed for plain scrolling
         skin.add("default", new ScrollPane.ScrollPaneStyle());
+
+        // Slider style — track and knob for horizontal sliders
+        Slider.SliderStyle sliderStyle = new Slider.SliderStyle();
+        sliderStyle.background = solid(BAR_BACKGROUND);
+        sliderStyle.knob       = solid(BTN_UP);
+        skin.add("default-horizontal", sliderStyle);
 
         return skin;
     }
