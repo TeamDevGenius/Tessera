@@ -12,7 +12,9 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.tessera.TesseraApp;
+import com.tessera.gdx.input.TouchControls;
 import com.tessera.gdx.screens.PauseMenuScreen;
+import com.tessera.gdx.screens.SettingsScreen;
 
 public class GameHUD {
 
@@ -24,14 +26,27 @@ public class GameHUD {
     private Label healthLabel;
     private Label hungerLabel;
     private Label airLabel;
+    /** Reflects current sprint state for button label update. */
+    private TextButton sprintBtn;
 
     private Skin skin;
 
     public GameHUD(Stage stage, BitmapFont font, TesseraApp app) {
-        this(stage, font, app, null);
+        this(stage, font, app, null, null);
     }
 
     public GameHUD(Stage stage, BitmapFont font, TesseraApp app, Runnable jumpCallback) {
+        this(stage, font, app, jumpCallback, null);
+    }
+
+    /**
+     * Full constructor.
+     *
+     * @param jumpCallback  called when the JUMP button is pressed; may be null
+     * @param touchControls the active {@link TouchControls}; used to wire sprint and fly buttons
+     */
+    public GameHUD(Stage stage, BitmapFont font, TesseraApp app,
+                   Runnable jumpCallback, TouchControls touchControls) {
         this.stage = stage;
         this.app   = app;
         skin = UiTheme.buildSkin();
@@ -70,7 +85,7 @@ public class GameHUD {
                 if (app != null) app.setScreen(new PauseMenuScreen(app));
             }
         });
-        topRight.add(pauseBtn).size(72, 72).row();
+        topRight.add(pauseBtn).size(UiTheme.btnHeight(), UiTheme.btnHeight()).row();
         stage.addActor(topRight);
 
         // Crosshair — centred
@@ -80,19 +95,56 @@ public class GameHUD {
         crosshairTable.add(crosshair);
         stage.addActor(crosshairTable);
 
-        // Jump button — bottom-right (large target for thumb)
-        if (jumpCallback != null) {
+        // Bottom-right area: jump + sprint + fly buttons
+        if (jumpCallback != null || touchControls != null) {
             Table bottomRight = new Table();
             bottomRight.bottom().right();
             bottomRight.setFillParent(true);
             bottomRight.pad(20);
-            TextButton jumpBtn = new TextButton("JUMP", skin);
-            jumpBtn.addListener(new ChangeListener() {
-                @Override public void changed(ChangeEvent e, Actor a) {
-                    jumpCallback.run();
-                }
-            });
-            bottomRight.add(jumpBtn).size(130, 90).row();
+
+            // Fly-up button (only useful in creative/freeplay but shown regardless – invisible when not needed)
+            if (touchControls != null) {
+                TextButton flyUpBtn = new TextButton("FLY UP", skin);
+                flyUpBtn.addListener(new ChangeListener() {
+                    @Override public void changed(ChangeEvent e, Actor a) {
+                        // toggle fly mode on first use; then hold handled via touchDown/Up in HUD
+                        touchControls.setFlying(true);
+                        touchControls.setFlyUp(flyUpBtn.isPressed());
+                    }
+                });
+                bottomRight.add(flyUpBtn).size(UiTheme.btnHeight(), UiTheme.btnHeight()).padBottom(4).row();
+
+                TextButton flyDownBtn = new TextButton("FLY DN", skin);
+                flyDownBtn.addListener(new ChangeListener() {
+                    @Override public void changed(ChangeEvent e, Actor a) {
+                        touchControls.setFlying(true);
+                        touchControls.setFlyDown(flyDownBtn.isPressed());
+                    }
+                });
+                bottomRight.add(flyDownBtn).size(UiTheme.btnHeight(), UiTheme.btnHeight()).padBottom(4).row();
+            }
+
+            if (jumpCallback != null) {
+                TextButton jumpBtn = new TextButton("JUMP", skin);
+                jumpBtn.addListener(new ChangeListener() {
+                    @Override public void changed(ChangeEvent e, Actor a) {
+                        jumpCallback.run();
+                    }
+                });
+                bottomRight.add(jumpBtn).size(130, 90).padBottom(4).row();
+            }
+
+            if (touchControls != null) {
+                sprintBtn = new TextButton("SPRINT", skin);
+                sprintBtn.addListener(new ChangeListener() {
+                    @Override public void changed(ChangeEvent e, Actor a) {
+                        touchControls.toggleSprint();
+                        sprintBtn.setText(touchControls.isSprinting() ? "SPRINT ✓" : "SPRINT");
+                    }
+                });
+                bottomRight.add(sprintBtn).size(130, 90).row();
+            }
+
             stage.addActor(bottomRight);
         }
     }
@@ -103,10 +155,17 @@ public class GameHUD {
     }
 
     public void update(float delta, PerspectiveCamera camera) {
+        boolean showFps = true;
+        try {
+            showFps = SettingsScreen.prefs().getBoolean(SettingsScreen.KEY_SHOW_FPS,
+                                                         SettingsScreen.DEFAULT_SHOW_FPS);
+        } catch (Throwable ignored) {}
+
         if (camera != null) {
             coordsLabel.setText(String.format("%.1f, %.1f, %.1f",
                 camera.position.x, camera.position.y, camera.position.z));
         }
+        fpsLabel.setVisible(showFps);
         fpsLabel.setText("FPS: " + Gdx.graphics.getFramesPerSecond());
         // Health/hunger/air labels are static placeholders until the engine player is wired
     }

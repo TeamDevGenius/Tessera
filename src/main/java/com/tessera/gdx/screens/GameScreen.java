@@ -39,7 +39,7 @@ public class GameScreen implements Screen {
         font = new BitmapFont();
         hudStage = new Stage(new ScreenViewport());
         touchControls = new TouchControls(camera, GdxGameInitializer.gdxWorld);
-        hud = new GameHUD(hudStage, font, app, touchControls::jump);
+        hud = new GameHUD(hudStage, font, app, touchControls::jump, touchControls);
 
         // HUD stage must handle taps first so pause/jump buttons work; fall through to touch controls
         Gdx.input.setInputProcessor(new InputMultiplexer(hudStage, touchControls));

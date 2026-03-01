@@ -13,6 +13,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.tessera.TesseraApp;
+import com.tessera.gdx.GdxGameInitializer;
 import com.tessera.gdx.ui.UiTheme;
 
 /**
@@ -80,14 +81,25 @@ public class PauseMenuScreen implements Screen {
         TextButton quitBtn = new TextButton("SAVE & QUIT", skin);
         quitBtn.addListener(new ChangeListener() {
             @Override public void changed(ChangeEvent e, Actor a) {
-                // TODO: trigger world save before returning to main menu
-                app.setScreen(new MainMenuScreen(app));
+                saveAndQuit();
             }
         });
         panel.add(quitBtn).width(UiTheme.BTN_WIDTH).height(UiTheme.BTN_HEIGHT).row();
 
         root.add(panel);
         stage.addActor(root);
+    }
+
+    private void saveAndQuit() {
+        // Persist the world before returning to the main menu
+        if (GdxGameInitializer.gdxWorld != null && GdxGameInitializer.gdxWorld.data != null) {
+            try {
+                GdxGameInitializer.gdxWorld.data.save();
+            } catch (Exception ex) {
+                Gdx.app.error("PauseMenu", "World save failed", ex);
+            }
+        }
+        app.setScreen(new MainMenuScreen(app));
     }
 
     @Override

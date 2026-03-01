@@ -62,19 +62,45 @@ public class WorldRenderer {
         chunkShader.setUniformf("u_fogEnd", viewDist + 32f);
         chunkShader.setUniformf("u_fogColor", 0.4f, 0.65f, 0.9f, 1f);
 
+        // First pass: opaque meshes (frustum-culled)
         world.chunks.values().forEach(chunk -> {
-            if (chunk.getGenerationStatus() == Chunk.GEN_COMPLETE) {
+            if (chunk.getGenerationStatus() == Chunk.GEN_COMPLETE && isChunkInFrustum(chunk)) {
                 chunk.updateMVP(jomlProjection, jomlView);
                 chunk.mvp.sendToShader(0, mvpUniform);
                 chunk.meshes.opaqueMesh.draw(false);
-                if (!chunk.meshes.transMesh.isEmpty()) {
-                    chunk.meshes.transMesh.draw(false);
-                }
             }
         });
 
+        // Second pass: transparent / blended meshes
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        Gdx.gl.glDepthMask(false);
+        world.chunks.values().forEach(chunk -> {
+            if (chunk.getGenerationStatus() == Chunk.GEN_COMPLETE
+                    && !chunk.meshes.transMesh.isEmpty()
+                    && isChunkInFrustum(chunk)) {
+                chunk.updateMVP(jomlProjection, jomlView);
+                chunk.mvp.sendToShader(0, mvpUniform);
+                chunk.meshes.transMesh.draw(false);
+            }
+        });
+        Gdx.gl.glDepthMask(true);
+        Gdx.gl.glDisable(GL20.GL_BLEND);
+
         Gdx.gl.glUseProgram(0);
         Gdx.gl.glDisable(GL20.GL_CULL_FACE);
+    }
+
+    private boolean isChunkInFrustum(Chunk chunk) {
+        com.tessera.engine.utils.math.AABB aabb = chunk.aabb;
+        if (aabb == null) return true;
+        float cx = (aabb.min.x + aabb.max.x) * 0.5f;
+        float cy = (aabb.min.y + aabb.max.y) * 0.5f;
+        float cz = (aabb.min.z + aabb.max.z) * 0.5f;
+        float hw = (aabb.max.x - aabb.min.x) * 0.5f;
+        float hh = (aabb.max.y - aabb.min.y) * 0.5f;
+        float hd = (aabb.max.z - aabb.min.z) * 0.5f;
+        return camera.frustum.boundsInFrustum(cx, cy, cz, hw, hh, hd);
     }
 
     public void dispose() {
