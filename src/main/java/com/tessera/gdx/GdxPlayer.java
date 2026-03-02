@@ -171,13 +171,13 @@ public class GdxPlayer extends Player {
         if (held == null) return false;
 
         Item item = held.item;
-        if (item == null || item.block == null) return false;
+        if (item == null || item.getBlock() == null) return false;
 
         Vector3i placePos = ray.getHitPosPlusNormal();
         Block existing = world.getBlock(placePos.x, placePos.y, placePos.z);
         if (existing != null && existing.solid) return false; // occupied
 
-        world.setBlock(item.block.id, placePos.x, placePos.y, placePos.z);
+        world.setBlock(item.getBlock().id, placePos.x, placePos.y, placePos.z);
 
         // Consume one item from the stack
         held.stackSize--;
