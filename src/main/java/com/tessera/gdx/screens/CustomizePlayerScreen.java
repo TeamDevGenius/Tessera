@@ -12,21 +12,43 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.tessera.Main;
 import com.tessera.TesseraApp;
+import com.tessera.engine.SkinRegistry;
+import com.tessera.engine.client.Client;
 import com.tessera.gdx.ui.UiTheme;
 
 /**
- * Customize-Player screen.
- * Allows the player to set their display name and cycle through available skins.
+ * Customize-Player screen – mirrors CustomizePlayer.java from the desktop.
+ * <p>
+ * Lets the player:
+ * <ul>
+ *   <li>Edit their display name (saved immediately via {@code userInfo.saveToDisk()})</li>
+ *   <li>Cycle through available skins (calls {@code userInfo.setSkin(id)} + save)</li>
+ * </ul>
  */
 public class CustomizePlayerScreen implements Screen {
 
     private final TesseraApp app;
+    private final Screen returnTo;
     private Stage stage;
     private Skin skin;
 
+    /** Tracks which skin is currently displayed (0-based index into skins registry). */
+    private int chosenSkin = 0;
+    private Label skinNameLabel;
+
     public CustomizePlayerScreen(TesseraApp app) {
-        this.app = app;
+        this(app, null);
+    }
+
+    /**
+     * @param app      the application
+     * @param returnTo screen to show when BACK is pressed; defaults to {@link MainMenuScreen}
+     */
+    public CustomizePlayerScreen(TesseraApp app, Screen returnTo) {
+        this.app      = app;
+        this.returnTo = returnTo;
     }
 
     @Override
@@ -34,6 +56,16 @@ public class CustomizePlayerScreen implements Screen {
         stage = new Stage(new ScreenViewport());
         Gdx.input.setInputProcessor(stage);
         skin = UiTheme.buildSkin();
+
+        // Pre-populate from player info if available
+        String currentName  = "Player";
+        if (Client.userPlayer != null && Client.userPlayer.userInfo != null
+                && Client.userPlayer.userInfo.name != null) {
+            currentName = Client.userPlayer.userInfo.name;
+        }
+        if (Client.userPlayer != null && Client.userPlayer.userInfo != null) {
+            chosenSkin = Client.userPlayer.userInfo.getSkinID();
+        }
 
         Table root = new Table();
         root.setFillParent(true);
@@ -44,33 +76,89 @@ public class CustomizePlayerScreen implements Screen {
                 new Label.LabelStyle(skin.getFont("default-font"), UiTheme.TITLE_COLOR));
         root.add(title).padBottom(20).colspan(2).row();
 
-        root.add(new Label("My Name:", skin)).left().padRight(10);
-        TextField nameField = new TextField("Player", skin);
+        // ── Name field ────────────────────────────────────────────────────────
+        root.add(new Label("My Name:",
+                new Label.LabelStyle(skin.getFont("default-font"), UiTheme.TEXT_COLOR)))
+                .left().padRight(10);
+        TextField nameField = new TextField(currentName, skin);
+        nameField.addListener(new ChangeListener() {
+            @Override public void changed(ChangeEvent e, Actor a) {
+                if (Client.userPlayer != null && Client.userPlayer.userInfo != null) {
+                    Client.userPlayer.userInfo.name = nameField.getText();
+                    Client.userPlayer.userInfo.saveToDisk();
+                }
+            }
+        });
         root.add(nameField).expandX().fillX().height(UiTheme.MIN_TOUCH).row();
 
         root.add().height(10).colspan(2).row();
 
-        root.add(new Label("Player Skin:", skin)).left().padRight(10);
-        TextButton skinBtn = new TextButton("Default", skin);
+        // ── Skin selector ─────────────────────────────────────────────────────
+        root.add(new Label("Player Skin:",
+                new Label.LabelStyle(skin.getFont("default-font"), UiTheme.TEXT_COLOR)))
+                .left().padRight(10);
+
+        skinNameLabel = new Label(currentSkinName(),
+                new Label.LabelStyle(skin.getFont("default-font"), UiTheme.TEXT_COLOR));
+        root.add(skinNameLabel).left().row();
+
+        root.add().height(6).colspan(2).row();
+
+        TextButton skinBtn = new TextButton("NEXT SKIN", skin);
         skinBtn.addListener(new ChangeListener() {
             @Override public void changed(ChangeEvent e, Actor a) {
-                // TODO: cycle through available skins when engine player is wired
+                goToNextSkin();
             }
         });
-        root.add(skinBtn).expandX().fillX().height(UiTheme.BTN_HEIGHT).row();
+        root.add(skinBtn).colspan(2).width(UiTheme.BTN_WIDTH).height(UiTheme.BTN_HEIGHT)
+                .padBottom(20).row();
 
-        root.add().height(20).colspan(2).row();
-
+        // ── BACK button ───────────────────────────────────────────────────────
         TextButton backBtn = new TextButton("BACK", skin);
         backBtn.addListener(new ChangeListener() {
             @Override public void changed(ChangeEvent e, Actor a) {
-                app.setScreen(new MainMenuScreen(app));
+                goBack();
             }
         });
         root.add(backBtn).colspan(2).width(UiTheme.BTN_WIDTH).height(UiTheme.BTN_HEIGHT).row();
 
         stage.addActor(root);
     }
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+
+    private void goToNextSkin() {
+        SkinRegistry skins = Main.skins;
+        if (skins == null || skins.size() == 0) return;
+        chosenSkin = (chosenSkin + 1) % skins.size();
+        if (Client.userPlayer != null && Client.userPlayer.userInfo != null) {
+            Client.userPlayer.userInfo.setSkin(chosenSkin);
+            Client.userPlayer.userInfo.saveToDisk();
+        }
+        if (skinNameLabel != null) skinNameLabel.setText(currentSkinName());
+    }
+
+    private String currentSkinName() {
+        if (Main.skins == null || Main.skins.size() == 0) return "none";
+        com.tessera.engine.server.players.SkinSupplier supplier = Main.skins.get(chosenSkin);
+        if (supplier == null) return "none";
+        // Derive a human-readable name from the skin class if a player is available
+        if (Client.userPlayer != null) {
+            com.tessera.engine.client.player.Skin s = supplier.get(Client.userPlayer);
+            return s != null ? s.name : "Skin " + chosenSkin;
+        }
+        return "Skin " + chosenSkin;
+    }
+
+    private void goBack() {
+        if (returnTo != null) {
+            app.setScreen(returnTo);
+        } else {
+            app.setScreen(new MainMenuScreen(app));
+        }
+    }
+
+    // ── Screen lifecycle ─────────────────────────────────────────────────────
 
     @Override
     public void render(float delta) {

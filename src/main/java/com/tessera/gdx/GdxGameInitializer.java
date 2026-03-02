@@ -53,6 +53,12 @@ public class GdxGameInitializer {
     public static GdxPlayer gdxPlayer;
 
     /**
+     * Optional network join request set by multiplayer screens before navigating
+     * to a LoadingScreen.  Cleared after it is consumed.
+     */
+    public static com.tessera.engine.server.multiplayer.NetworkJoinRequest pendingNetworkRequest;
+
+    /**
      * Phase 1 – runs on a background thread.
      * Initialises resource paths and prepares block / entity / item lists.
      */
