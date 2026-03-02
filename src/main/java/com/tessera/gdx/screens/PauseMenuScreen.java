@@ -107,8 +107,8 @@ public class PauseMenuScreen implements Screen {
                         Settings settings = Settings.load();
                         try {
                             world.setViewDistance(settings, val);
-                        } catch (Exception ignored) {
-                            // chunkShader may not be initialised in GDX context
+                        } catch (NullPointerException ignored) {
+                            // chunkShader is null in the GDX render path
                             settings.viewDistance.value = val;
                             settings.save();
                         }

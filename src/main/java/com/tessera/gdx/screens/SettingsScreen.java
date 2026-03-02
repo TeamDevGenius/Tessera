@@ -82,18 +82,18 @@ public class SettingsScreen implements Screen {
         // ── sliders ───────────────────────────────────────────────────────────
         viewDistSlider = addIntSlider(content, "View Distance",
                 settings.viewDistance.value,
-                settings.viewDistance.min == 0 ? World.VIEW_DIST_MIN : settings.viewDistance.min,
-                settings.viewDistance.max == 0 ? World.VIEW_DIST_MAX : settings.viewDistance.max);
+                effectiveMin(settings.viewDistance.min, World.VIEW_DIST_MIN),
+                effectiveMax(settings.viewDistance.max, World.VIEW_DIST_MAX));
 
         entityDistSlider = addIntSlider(content, "Entity Distance",
                 settings.video_entityDistance.value,
-                settings.video_entityDistance.min == 0 ? 20 : settings.video_entityDistance.min,
-                settings.video_entityDistance.max == 0 ? 100 : settings.video_entityDistance.max);
+                effectiveMin(settings.video_entityDistance.min, 20),
+                effectiveMax(settings.video_entityDistance.max, 100));
 
         fullscreenSizeSlider = addFloatSlider(content, "Fullscreen Size",
                 settings.video_fullscreenSize.value,
-                settings.video_fullscreenSize.min == 0f ? 0.5f : settings.video_fullscreenSize.min,
-                settings.video_fullscreenSize.max == 0f ? 1.0f : settings.video_fullscreenSize.max);
+                effectiveMinF(settings.video_fullscreenSize.min, 0.5f),
+                effectiveMaxF(settings.video_fullscreenSize.max, 1.0f));
 
         // ── scroll pane wraps the content ─────────────────────────────────────
         ScrollPane scroll = new ScrollPane(content, skin);
@@ -192,11 +192,19 @@ public class SettingsScreen implements Screen {
         if (world != null) {
             try {
                 world.setViewDistance(settings, settings.viewDistance.value);
-            } catch (Exception ignored) {
-                // chunkShader may not be initialised in the GDX render path
+            } catch (NullPointerException ignored) {
+                // chunkShader is null in the GDX render path – view distance is
+                // persisted to settings and will be applied on next world load
             }
         }
     }
+
+    // ── bounds helpers ────────────────────────────────────────────────────────
+
+    private static int   effectiveMin (int   v, int   fallback) { return v <= 0  ? fallback : v; }
+    private static int   effectiveMax (int   v, int   fallback) { return v <= 0  ? fallback : v; }
+    private static float effectiveMinF(float v, float fallback) { return v <= 0f ? fallback : v; }
+    private static float effectiveMaxF(float v, float fallback) { return v <= 0f ? fallback : v; }
 
     private void goBack() {
         if (returnTo != null) {

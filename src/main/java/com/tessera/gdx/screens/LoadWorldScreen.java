@@ -162,7 +162,7 @@ public class LoadWorldScreen implements Screen {
             }
         });
         confirmRow.add(confirmDeleteBtn).width(UiTheme.BTN_WIDTH / 2f).height(UiTheme.BTN_HEIGHT).padRight(6);
-        confirmRow.add(cancelDeleteBtn) .width(UiTheme.BTN_WIDTH / 2f).height(UiTheme.BTN_HEIGHT);
+        confirmRow.add(cancelDeleteBtn).width(UiTheme.BTN_WIDTH / 2f).height(UiTheme.BTN_HEIGHT);
         details.add(confirmRow).expandX().fillX().padBottom(8).row();
 
         // BACK

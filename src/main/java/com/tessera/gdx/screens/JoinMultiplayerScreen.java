@@ -38,7 +38,11 @@ import java.net.InetAddress;
  */
 public class JoinMultiplayerScreen implements Screen {
 
-    private static final int DEFAULT_PORT = 8080;
+    private static final int    DEFAULT_PORT              = 8080;
+    /** Placeholder world name used when joining (world data comes from the server). */
+    private static final String MULTIPLAYER_WORLD_NAME    = "multiplayer";
+    private static final int    MULTIPLAYER_DEFAULT_SEED  = 0;
+    private static final String MULTIPLAYER_EMPTY_TERRAIN = "";
 
     private final TesseraApp app;
     private Stage stage;
@@ -183,7 +187,8 @@ public class JoinMultiplayerScreen implements Screen {
         // Navigate to LoadingScreen which will consume the pending request.
         // For JOIN (non-hosting) worldName/seed/terrain are irrelevant at the GDX
         // level; the actual world data arrives from the remote server.
-        app.setScreen(new LoadingScreen(app, "multiplayer", 0, ""));
+        app.setScreen(new LoadingScreen(app,
+                MULTIPLAYER_WORLD_NAME, MULTIPLAYER_DEFAULT_SEED, MULTIPLAYER_EMPTY_TERRAIN));
     }
 
     private static String resolveLocalIp() {
