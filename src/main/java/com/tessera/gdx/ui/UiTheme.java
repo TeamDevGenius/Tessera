@@ -4,9 +4,11 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.scenes.scene2d.ui.CheckBox;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Slider;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.ui.Window;
@@ -72,6 +74,20 @@ public class UiTheme {
 
         // ScrollPane style — no decorations needed for plain scrolling
         skin.add("default", new ScrollPane.ScrollPaneStyle());
+
+        // CheckBox style
+        CheckBox.CheckBoxStyle cbStyle = new CheckBox.CheckBoxStyle();
+        cbStyle.font      = font;
+        cbStyle.fontColor = TEXT_COLOR;
+        cbStyle.checkboxOn  = solid(new Color(0.25f, 0.65f, 0.25f, 1f));
+        cbStyle.checkboxOff = solid(new Color(0.20f, 0.20f, 0.40f, 1f));
+        skin.add("default", cbStyle);
+
+        // Horizontal Slider style
+        Slider.SliderStyle sliderStyle = new Slider.SliderStyle();
+        sliderStyle.background = solid(BAR_BACKGROUND);
+        sliderStyle.knob       = solid(BAR_FILL);
+        skin.add("default-horizontal", sliderStyle);
 
         return skin;
     }
