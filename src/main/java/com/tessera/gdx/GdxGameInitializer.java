@@ -1,5 +1,6 @@
 package com.tessera.gdx;
 
+import com.tessera.Main;
 import com.tessera.content.vanilla.Blocks;
 import com.tessera.content.vanilla.Entities;
 import com.tessera.content.vanilla.Items;
@@ -7,7 +8,9 @@ import com.tessera.content.vanilla.blocks.RenderType;
 import com.tessera.content.vanilla.blocks.type.*;
 import com.tessera.content.vanilla.terrain.FlatTerrain;
 import com.tessera.content.vanilla.terrain.defaultTerrain.DefaultTerrain;
+import com.tessera.engine.SkinRegistry;
 import com.tessera.engine.client.Client;
+import com.tessera.engine.server.GameMode;
 import com.tessera.engine.server.Registrys;
 import com.tessera.engine.server.block.Block;
 import com.tessera.engine.server.entity.EntitySupplier;
@@ -20,7 +23,6 @@ import com.tessera.engine.utils.progress.ProgressData;
 import com.tessera.engine.utils.resource.ResourceLister;
 import com.tessera.engine.utils.resource.ResourceUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -42,9 +44,13 @@ public class GdxGameInitializer {
     private static List<Item> pendingItemList;
     private static String pendingWorldName;
     private static int pendingSeed;
+    private static String pendingTerrainName;
 
     /** The world instance used by the GDX/Android render path. */
     public static World gdxWorld;
+
+    /** The active GDX player instance (set after {@link #initGLResources}). */
+    public static GdxPlayer gdxPlayer;
 
     /**
      * Phase 1 – runs on a background thread.
@@ -57,8 +63,14 @@ public class GdxGameInitializer {
         ResourceUtils.initialize(false, null);
         ResourceLister.init();
 
+        // SkinRegistry must be set before any Player constructor runs
+        if (Main.skins == null) {
+            Main.skins = new SkinRegistry();
+        }
+
         pendingWorldName = (worldName != null && !worldName.isEmpty()) ? worldName : "world";
         pendingSeed = seed;
+        pendingTerrainName = (terrainName != null && !terrainName.isEmpty()) ? terrainName : "";
 
         if (progress != null) progress.setTask("Registering block types...");
         registerBlockTypes();
@@ -100,13 +112,24 @@ public class GdxGameInitializer {
         // or register directly into a local list used by the GDX game loop.
         // For now we populate the standard vanilla terrains here so that a
         // GdxServer/World can resolve terrain by name.
-        GdxTerrainRegistry.terrains.add(new DefaultTerrain());
-        GdxTerrainRegistry.terrains.add(new FlatTerrain());
+        if (GdxTerrainRegistry.terrains.isEmpty()) {
+            GdxTerrainRegistry.terrains.add(new DefaultTerrain());
+            GdxTerrainRegistry.terrains.add(new FlatTerrain());
+        }
 
         // Create and initialise the GDX world using the existing Client.world instance
         gdxWorld = Client.world;
         gdxWorld.data = new WorldData();
-        gdxWorld.terrain = GdxTerrainRegistry.terrains.isEmpty() ? null : GdxTerrainRegistry.terrains.get(0);
+
+        // Select terrain by name if specified; default to first available terrain
+        com.tessera.engine.server.world.Terrain selectedTerrain = null;
+        if (pendingTerrainName != null && !pendingTerrainName.isEmpty()) {
+            selectedTerrain = GdxTerrainRegistry.getTerrainByName(pendingTerrainName);
+        }
+        if (selectedTerrain == null && !GdxTerrainRegistry.terrains.isEmpty()) {
+            selectedTerrain = GdxTerrainRegistry.terrains.get(0);
+        }
+        gdxWorld.terrain = selectedTerrain;
         if (gdxWorld.terrain != null) {
             com.tessera.engine.utils.option.OptionsList emptyOptions =
                     new com.tessera.engine.utils.option.OptionsList();
@@ -115,11 +138,33 @@ public class GdxGameInitializer {
         }
         gdxWorld.initGdx(Registrys.blocks.textures);
 
+        // Create the GDX player and register it as the active user player
+        if (progress != null) progress.setTask("Initializing player...");
+        gdxPlayer = new GdxPlayer();
+        gdxPlayer.userInfo.loadFromDisk();
+        // Position the player at the world's saved spawn, or a sensible default
+        com.tessera.engine.server.world.data.WorldData wd = gdxWorld.data;
+        if (wd != null) {
+            try {
+                gdxPlayer.loadFromWorld(wd);
+            } catch (Exception ignored) {
+                // first run – no saved player data
+            }
+        }
+        Client.userPlayer = gdxPlayer;
+
+        // Set a default game mode so server-side code that reads it doesn't NPE
+        if (gdxWorld.data != null && gdxWorld.data.data != null
+                && gdxWorld.data.data.gameMode == null) {
+            gdxWorld.data.data.gameMode = GameMode.ADVENTURE;
+        }
+
         // Clean up intermediate lists to allow GC
         pendingBlockList = null;
         pendingEntityList = null;
         pendingItemList = null;
         pendingWorldName = null;
+        pendingTerrainName = null;
         pendingSeed = 0;
     }
 
