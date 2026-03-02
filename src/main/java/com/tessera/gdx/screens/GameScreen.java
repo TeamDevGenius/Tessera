@@ -57,15 +57,18 @@ public class GameScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0.4f, 0.65f, 0.9f, 1f);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-        Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
-
         // Physics, player-position sync and stat tick happen here
         touchControls.update(delta, camera);
         camera.update();
 
-        if (worldRenderer != null) worldRenderer.render(delta);
+        if (worldRenderer != null) {
+            // WorldRenderer owns the clear, sky, chunks, entities and updates clear colour
+            worldRenderer.render(delta);
+        } else {
+            // Fallback clear when the renderer is not yet ready
+            Gdx.gl.glClearColor(0.4f, 0.65f, 0.9f, 1f);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+        }
 
         // ── 2-D overlay pass (no depth test) ─────────────────────────────────
         Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
